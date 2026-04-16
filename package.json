@@ -1,10 +1,13 @@
 {
-  "name": "Follio-next",
+  "name": "follio-next",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "16.x"
+  },
   "scripts": {
     "dev": "next dev",
-    "build": "next build && next export -o docs",
+    "build": "next build",
     "start": "next start"
   },
   "dependencies": {
@@ -41,7 +44,6 @@
     "redux": "^4.0.4",
     "redux-thunk": "^2.3.0",
     "sass": "^1.77.0",
-    "sharp": "^0.34.5",
     "slick-carousel": "^1.8.1",
     "swiper": "^5.0.4"
   }
