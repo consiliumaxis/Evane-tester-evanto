@@ -22,7 +22,7 @@ const AboutHome = (props) => {
                                 <li>Best Price in Marketplace.</li>
                                 <li>Unique Design and Development.</li>
                             </ul>
-                            <Link href="/AboutPage"><a className="theme-btn-s2">More About</a></Link>
+                            <Link href="#contact"><a className="theme-btn-s2">Get in touch</a></Link>
                         </div>
                     </div>
                 </div>
