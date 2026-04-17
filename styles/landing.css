@@ -1,8 +1,10 @@
 /* Trading landing theme. Dark luxury / charcoal + bronze. */
 
 :root {
-  /* Single background tone used by every block — no color change between sections */
+  /* Top of the page; gradient darkens toward the bottom. */
   --bg-base: #0a0f1e;
+  --bg-deep: #04071a;
+  --bg-footer: #000000;
   --text-primary: #f4f1ea;
   --text-muted: #b7bccb;
   --text-faint: #8890a4;
@@ -11,8 +13,8 @@
   --accent-soft: rgba(201, 165, 74, 0.12);
   --border: rgba(201, 165, 74, 0.28);
   --border-soft: rgba(255, 255, 255, 0.06);
-  --danger-border: rgba(255, 139, 106, 0.4);
-  --danger-text: #ffb59d;
+  --danger-border: rgba(255, 139, 106, 0.55);
+  --danger-text: #ffc6b1;
   --font-serif: 'Playfair Display', 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
   --font-sans: 'Inter', 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --shadow-cta: 0 20px 40px -18px rgba(201, 165, 74, 0.55);
@@ -23,6 +25,23 @@
   max-width: 1120px;
   margin: 0 auto;
   padding: 0 24px;
+}
+
+/* ---------- Main content gradient ---------- */
+/* Smooth, subtle top-to-bottom darkening across the entire main content. */
+/* Footer is intentionally NOT part of this gradient — it reads as its own
+ * near-black block with a sharp boundary and a gold hairline. */
+
+main {
+  display: block;
+  background:
+    linear-gradient(
+      180deg,
+      var(--bg-base) 0%,
+      #080c22 35%,
+      #06081c 65%,
+      var(--bg-deep) 100%
+    );
 }
 
 /* ---------- Hero / Video ---------- */
@@ -223,7 +242,7 @@
 /* ---------- Benefits grid ---------- */
 
 .benefits {
-  background: var(--bg-base);
+  background: transparent;
 }
 
 .benefits__grid {
@@ -271,7 +290,7 @@
 .cta-band {
   padding: 72px 0;
   text-align: center;
-  background: var(--bg-base);
+  background: transparent;
 }
 
 .cta-band__title {
@@ -315,10 +334,29 @@
 /* ---------- Footer ---------- */
 
 .footer {
+  position: relative;
   padding: 72px 0 40px;
-  background: var(--bg-base);
+  background: var(--bg-footer);
   color: var(--text-muted);
   font-family: var(--font-sans);
+}
+
+/* Thin gold hairline that marks the hard boundary between the gradient
+ * main content and the final black compliance / legal zone. */
+.footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(201, 165, 74, 0.45) 50%,
+    transparent 100%
+  );
+  pointer-events: none;
 }
 
 .footer__grid {
