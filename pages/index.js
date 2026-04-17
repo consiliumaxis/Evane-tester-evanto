@@ -3,7 +3,6 @@ import Head from 'next/head';
 import VideoHero from '../components/landing/VideoHero';
 import Benefits from '../components/landing/Benefits';
 import CtaBand from '../components/landing/CtaBand';
-import RiskDisclaimer from '../components/landing/RiskDisclaimer';
 import LandingFooter from '../components/landing/LandingFooter';
 import {
   SITE_URL,
@@ -74,7 +73,6 @@ export default function Home() {
         <VideoHero />
         <Benefits />
         <CtaBand />
-        <RiskDisclaimer />
       </main>
       <LandingFooter />
     </Fragment>

@@ -1,6 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
-import { CTA_INTERNAL_HREF } from '../../lib/seo';
 
 // Replace /videos/promo.mp4 with the real file in public/videos/.
 // VIDEO_SRC and POSTER_SRC are kept as relative paths so the public/ folder
@@ -12,15 +10,6 @@ function PlayIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <path d="M8 5.14v13.72c0 .79.87 1.27 1.54.85l10.79-6.86a1 1 0 0 0 0-1.7L9.54 4.29C8.87 3.87 8 4.35 8 5.14Z" />
-    </svg>
-  );
-}
-
-function ArrowIcon() {
-  return (
-    <svg className="cta__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M5 12h14" />
-      <path d="m13 5 7 7-7 7" />
     </svg>
   );
 }
@@ -81,13 +70,6 @@ export default function VideoHero() {
         <p className="hero__subtitle">
           Institutional-grade signals, real-time commentary and a daily live review — delivered straight to your Telegram.
         </p>
-
-        <Link href={CTA_INTERNAL_HREF}>
-          <a className="cta cta--lg" data-testid="cta-primary">
-            Перейти в Telegram
-            <ArrowIcon />
-          </a>
-        </Link>
       </div>
 
       {!isUserPlaying && (
