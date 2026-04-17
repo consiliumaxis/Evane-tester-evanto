@@ -1,10 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-// Replace /videos/promo.mp4 with the real file in public/videos/.
-// VIDEO_SRC and POSTER_SRC are kept as relative paths so the public/ folder
-// is the single source of truth — no env-var plumbing needed.
-const VIDEO_SRC = '/videos/promo.mp4';
-const POSTER_SRC = '/images/video-poster.jpg';
+// Short, copyright-safe test video hosted on YouTube (Google's "Me at the zoo",
+// the very first YouTube upload, ~19s, embeddable). Swap TEST_VIDEO_ID for the
+// real promo clip when you have one.
+const TEST_VIDEO_ID = 'jNQXAC9IVRw';
+const YT_API_SRC = 'https://www.youtube.com/iframe_api';
 
 function PlayIcon() {
   return (
@@ -14,51 +14,101 @@ function PlayIcon() {
   );
 }
 
+// Load the YouTube IFrame API once per page. Returns a promise that resolves
+// with window.YT when the global is ready.
+function loadYouTubeApi() {
+  if (typeof window === 'undefined') return Promise.reject();
+  if (window.YT && window.YT.Player) return Promise.resolve(window.YT);
+
+  if (!window.__ytApiPromise) {
+    window.__ytApiPromise = new Promise((resolve) => {
+      const existing = document.querySelector(`script[src="${YT_API_SRC}"]`);
+      const prev = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => {
+        if (typeof prev === 'function') prev();
+        resolve(window.YT);
+      };
+      if (!existing) {
+        const tag = document.createElement('script');
+        tag.src = YT_API_SRC;
+        tag.async = true;
+        document.body.appendChild(tag);
+      }
+    });
+  }
+  return window.__ytApiPromise;
+}
+
 export default function VideoHero() {
-  const videoRef = useRef(null);
+  const mountRef = useRef(null);
+  const playerRef = useRef(null);
+  const [isReady, setIsReady] = useState(false);
   const [isUserPlaying, setIsUserPlaying] = useState(false);
 
-  // Kick off muted autoplay on mount. Browsers only allow autoplay when muted.
   useEffect(() => {
-    const v = videoRef.current;
-    if (!v) return;
-    v.muted = true;
-    const p = v.play();
-    if (p && typeof p.catch === 'function') {
-      p.catch(() => { /* autoplay may be blocked; poster + Play button still work */ });
-    }
+    let cancelled = false;
+
+    loadYouTubeApi().then((YT) => {
+      if (cancelled || !mountRef.current) return;
+      playerRef.current = new YT.Player(mountRef.current, {
+        videoId: TEST_VIDEO_ID,
+        playerVars: {
+          autoplay: 1,
+          mute: 1,
+          controls: 0,
+          playsinline: 1,
+          rel: 0,
+          modestbranding: 1,
+          iv_load_policy: 3,
+          disablekb: 1,
+          fs: 0,
+          loop: 1,
+          playlist: TEST_VIDEO_ID, // required for loop=1 to take effect
+        },
+        events: {
+          onReady: (e) => {
+            try {
+              e.target.mute();
+              e.target.playVideo();
+            } catch (_) {}
+            if (!cancelled) setIsReady(true);
+          },
+        },
+      });
+    });
+
+    return () => {
+      cancelled = true;
+      if (playerRef.current && typeof playerRef.current.destroy === 'function') {
+        try { playerRef.current.destroy(); } catch (_) {}
+      }
+    };
   }, []);
 
-  const handlePlay = () => {
-    const v = videoRef.current;
-    if (!v) return;
-    // Spec: video must RESTART from the beginning with sound on — not resume.
-    v.pause();
-    v.currentTime = 0;
-    v.muted = false;
-    v.volume = 1;
-    const p = v.play();
-    if (p && typeof p.catch === 'function') {
-      p.catch(() => { /* ignore; UI state already updated */ });
+  const handlePlay = useCallback(() => {
+    const p = playerRef.current;
+    if (!p) return;
+    // Spec: restart from the beginning with sound on — not resume.
+    try {
+      p.seekTo(0, true);
+      p.unMute();
+      if (typeof p.setVolume === 'function') p.setVolume(100);
+      p.playVideo();
+    } catch (_) {
+      // If any API call fails, we still hide the overlay so the user sees
+      // the video running; subsequent calls will succeed once onReady fires.
     }
     setIsUserPlaying(true);
-  };
+  }, []);
 
   return (
     <section className="hero" aria-label="Intro">
-      <video
-        ref={videoRef}
-        className="hero__video"
-        src={VIDEO_SRC}
-        poster={POSTER_SRC}
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="metadata"
+      <div
+        className={`hero__video-wrap${isReady ? ' hero__video-wrap--ready' : ''}`}
         aria-hidden="true"
-      />
-      <div className="hero__video-fallback" aria-hidden="true" />
+      >
+        <div ref={mountRef} className="hero__video-mount" />
+      </div>
       <div className="hero__overlay" aria-hidden="true" />
 
       <div className="container hero__content">

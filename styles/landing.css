@@ -40,48 +40,46 @@ main {
 
 .hero {
   position: relative;
-  min-height: 100vh;
+  min-height: 88vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
   overflow: hidden;
   isolation: isolate;
-  padding: 96px 0 120px;
+  padding: 96px 0 104px;
   background: transparent;
 }
 
-.hero__video,
-.hero__video-fallback {
+.hero__video-wrap {
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
   z-index: -2;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  /* Soft fade at the bottom so the video dissolves into the page gradient */
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 70%, rgba(0,0,0,0.4) 90%, transparent 100%);
+          mask-image: linear-gradient(180deg, #000 0%, #000 70%, rgba(0,0,0,0.4) 90%, transparent 100%);
 }
 
-/* Both the video and the dark overlay fade out toward the bottom of the
- * hero, so the hero dissolves into the page gradient instead of ending
- * with a visible edge against the next section. */
-.hero__video {
-  -webkit-mask-image: linear-gradient(
-    180deg,
-    #000 0%,
-    #000 60%,
-    rgba(0, 0, 0, 0.4) 85%,
-    transparent 100%
-  );
-          mask-image: linear-gradient(
-    180deg,
-    #000 0%,
-    #000 60%,
-    rgba(0, 0, 0, 0.4) 85%,
-    transparent 100%
-  );
+.hero__video-wrap--ready {
+  opacity: 1;
 }
 
-.hero__video-fallback {
-  background: transparent;
+/* YouTube iframe (or any replaced element) fills the wrapper with a
+ * 16:9 cover crop — whichever dimension dominates, the other is scaled
+ * up and centered so there are never black bars. */
+.hero__video-mount,
+.hero__video-wrap iframe {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(100%, 177.78vh);
+  height: max(100%, 56.25vw);
+  transform: translate(-50%, -50%);
+  border: 0;
+  pointer-events: none;
 }
 
 .hero__overlay {
@@ -132,7 +130,7 @@ main {
   font-size: clamp(1rem, 1.6vw, 1.25rem);
   color: var(--text-muted);
   max-width: 640px;
-  margin: 0 auto 40px;
+  margin: 0 auto;
 }
 
 .hero__play-wrap {
@@ -439,13 +437,37 @@ main {
 }
 
 @media (max-width: 720px) {
-  .footer__grid { grid-template-columns: 1fr; gap: 32px; }
-  .footer__bottom { flex-direction: column; }
-  .section { padding: 72px 0; }
-  .hero { padding: 80px 0 96px; min-height: 92vh; }
-  .hero__play { width: 84px; height: 84px; }
-  .hero__play svg { width: 28px; height: 28px; }
-  .risk__inner { padding: 24px; }
+  .footer { padding: 48px 0 28px; }
+  .footer__grid { grid-template-columns: 1fr; gap: 28px; margin-bottom: 36px; }
+  .footer__risk { padding: 22px 20px; margin-bottom: 32px; }
+  .footer__bottom { flex-direction: column; gap: 6px; padding-top: 20px; }
+
+  .section { padding: 48px 0; }
+  .section__title { margin-bottom: 36px; }
+  .section__divider { margin-bottom: 32px; }
+
+  /* Hero on mobile: let content drive the height so there's no empty 92vh
+   * slab when the video is short or takes a moment to load. */
+  .hero {
+    min-height: 0;
+    padding: 56px 0 64px;
+  }
+  .hero__eyebrow { margin-bottom: 20px; }
+  .hero__title { margin-bottom: 16px; }
+  .hero__play { width: 76px; height: 76px; }
+  .hero__play svg { width: 26px; height: 26px; }
+  .hero__play::before { inset: -10px; }
+
+  .cta-band { padding: 44px 0; }
+
+  .benefits__grid { gap: 16px; }
+  .benefit { padding: 26px 22px; }
+}
+
+@media (max-width: 480px) {
+  .section { padding: 40px 0; }
+  .hero { padding: 48px 0 56px; }
+  .cta-band { padding: 36px 0; }
 }
 
 /* ---------- Thank-you / legal pages shared ---------- */
@@ -458,7 +480,15 @@ main {
 
 .simple-page__main {
   flex: 1;
-  padding: 120px 0 80px;
+  padding: 96px 0 64px;
+}
+
+@media (max-width: 720px) {
+  .simple-page__main { padding: 64px 0 40px; }
+  .simple-page__title { margin-bottom: 20px; }
+  .simple-page__lead { margin-bottom: 24px; }
+  .simple-page__step { padding: 16px 18px; }
+  .error-hero { padding: 72px 0; }
 }
 
 .simple-page__container {
