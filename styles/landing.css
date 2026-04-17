@@ -48,6 +48,9 @@ main {
   isolation: isolate;
   padding: 96px 0 104px;
   background: transparent;
+  /* After the user activates, clicking anywhere in the hero toggles pause,
+   * so hint that with a pointer cursor on the non-text area. */
+  cursor: default;
 }
 
 .hero__video-wrap {
@@ -186,6 +189,55 @@ main {
 @keyframes pulse {
   0% { transform: scale(1); opacity: 0.8; }
   100% { transform: scale(1.35); opacity: 0; }
+}
+
+/* ---------- Pause indicator (post-activation) ---------- */
+
+.hero__pause-wrap {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  pointer-events: none;
+  animation: fade-in 0.18s ease;
+}
+
+.hero__pause-indicator {
+  width: 76px;
+  height: 76px;
+  border-radius: 999px;
+  background: rgba(10, 15, 30, 0.55);
+  border: 1px solid rgba(229, 196, 108, 0.45);
+  color: var(--accent-bright);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.hero__pause-indicator svg {
+  width: 26px;
+  height: 26px;
+  transform: translateX(2px);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Small hint under the subtitle, after the user has activated — so they know
+ * that the video itself / spacebar are now pause controls. */
+.hero__hint {
+  margin: 22px 0 0;
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-faint);
 }
 
 /* ---------- CTA button ---------- */
@@ -457,6 +509,9 @@ main {
   .hero__play { width: 76px; height: 76px; }
   .hero__play svg { width: 26px; height: 26px; }
   .hero__play::before { inset: -10px; }
+  .hero__pause-indicator { width: 64px; height: 64px; }
+  .hero__pause-indicator svg { width: 22px; height: 22px; }
+  .hero__hint { font-size: 0.72rem; letter-spacing: 0.16em; margin-top: 18px; }
 
   .cta-band { padding: 44px 0; }
 
