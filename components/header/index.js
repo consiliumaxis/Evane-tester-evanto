@@ -9,11 +9,10 @@ const Header = () => {
             <div className="container">
                 <div className="header-content">
                     <div className="logo">
-                        <Link href="/" title="Home"><a><img src='images/logo.png' alt="Logo" /></a></Link>
+                        <img src='images/logo.png' alt="Logo" />
                     </div>
                     <nav className="d-lg-block d-none header-b">
                         <ul>
-                            <li><Link className="active" href="/" title="Home">Home</Link></li>
                             <li><Link href="#about" title="About">About</Link></li>
                             <li><Link href="#portfolio" title="Portfolio">Portfolio</Link></li>
                             <li><Link href="#contact" title="Contact">Contact</Link></li>

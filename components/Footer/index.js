@@ -26,7 +26,7 @@ const Footer = (props) => {
                 </div>
             </div>
             <div className={`wpo-footer-bottom ${props.Fbclass || ''}`}>
-                <span>© {year} <Link href="/">Follio</Link>. All rights reserved</span>
+                <span>© {year} Follio. All rights reserved</span>
             </div>
         </div>
     )
