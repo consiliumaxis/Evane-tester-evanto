@@ -1,26 +1,28 @@
-import { SITE_URL } from '../lib/seo';
+import { SITE_URL, LEGAL_PAGES } from '../lib/seo';
 
-// Only lists canonical, really-existing, indexable URLs.
-// Right now that's the homepage only.
+// Only indexable URLs. /thank-you is intentionally excluded (noindex funnel page).
 const URLS = [
-  {
-    loc: `${SITE_URL}/`,
-    changefreq: 'weekly',
-    priority: '1.0',
-  },
+  { path: '/', changefreq: 'weekly', priority: '1.0' },
+  ...LEGAL_PAGES.map((l) => ({
+    path: l.path,
+    changefreq: 'yearly',
+    priority: '0.3',
+  })),
 ];
 
 function buildSitemap(urls, lastmod) {
   const body = urls
-    .map(
-      (u) => `  <url>
-    <loc>${u.loc}</loc>
+    .map((u) => {
+      const withSlash = u.path.endsWith('/') ? u.path : `${u.path}/`;
+      return `  <url>
+    <loc>${SITE_URL}${withSlash}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>${u.changefreq}</changefreq>
     <priority>${u.priority}</priority>
-  </url>`
-    )
+  </url>`;
+    })
     .join('\n');
+
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${body}
