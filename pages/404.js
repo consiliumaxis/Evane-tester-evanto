@@ -1,29 +1,26 @@
 import React, { Fragment } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
+import LandingFooter from '../components/landing/LandingFooter';
 
-const NotFound = () => {
-    return (
-        <Fragment>
-            <Head>
-                <title>Page not found — 404</title>
-                <meta name="robots" content="noindex, follow" />
-            </Head>
-            <Navbar />
-            <section className="wpo-contact-area section-padding" style={{ textAlign: 'center' }}>
-                <div className="container">
-                    <h1 style={{ fontSize: '6rem', marginBottom: '0.5rem' }}>404</h1>
-                    <p style={{ fontSize: '1.25rem', marginBottom: '2rem' }}>
-                        The page you are looking for does not exist.
-                    </p>
-                    <Link href="/"><a className="theme-btn">Back to home</a></Link>
-                </div>
-            </section>
-            <Footer />
-        </Fragment>
-    );
-};
+export default function NotFound() {
+  return (
+    <Fragment>
+      <Head>
+        <title>Page not found — 404</title>
+        <meta name="robots" content="noindex, follow" />
+      </Head>
 
-export default NotFound;
+      <div className="simple-page">
+        <main className="simple-page__main">
+          <div className="simple-page__container error-hero">
+            <h1 className="error-hero__code">404</h1>
+            <p className="error-hero__title">The page you are looking for does not exist.</p>
+            <Link href="/"><a className="cta">Back to home</a></Link>
+          </div>
+        </main>
+        <LandingFooter />
+      </div>
+    </Fragment>
+  );
+}

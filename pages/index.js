@@ -1,17 +1,13 @@
 import React, { Fragment } from 'react';
 import Head from 'next/head';
-import Navbar from '../components/Navbar';
-import Hero1 from '../components/Hero1';
-import Exprience from '../components/exprience';
-import AboutHome from '../components/AboutHome';
-import PorfolioSectionHome from '../components/PorfolioSectionHome';
-import TestSlider from '../components/Testimonial';
-import ContactArea from '../components/ContactArea';
-import Footer from '../components/Footer';
+import VideoHero from '../components/landing/VideoHero';
+import Benefits from '../components/landing/Benefits';
+import CtaBand from '../components/landing/CtaBand';
+import RiskDisclaimer from '../components/landing/RiskDisclaimer';
+import LandingFooter from '../components/landing/LandingFooter';
 import {
   SITE_URL,
   SITE_NAME,
-  SITE_AUTHOR,
   DEFAULT_TITLE,
   DEFAULT_DESCRIPTION,
   OG_IMAGE,
@@ -32,17 +28,15 @@ const jsonLd = {
       inLanguage: 'en',
     },
     {
-      '@type': 'Person',
-      '@id': `${SITE_URL}/#person`,
-      name: SITE_AUTHOR,
-      jobTitle: 'Freelance UI/UX Designer',
+      '@type': 'Organization',
+      '@id': `${SITE_URL}/#organization`,
+      name: SITE_NAME,
       url: `${SITE_URL}/`,
-      mainEntityOfPage: `${SITE_URL}/`,
     },
   ],
 };
 
-const HomePage = () => {
+export default function Home() {
   return (
     <Fragment>
       <Head>
@@ -55,7 +49,6 @@ const HomePage = () => {
         />
         <link rel="canonical" href={canonical} />
 
-        {/* Open Graph */}
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content={SITE_NAME} />
         <meta property="og:title" content={DEFAULT_TITLE} />
@@ -64,7 +57,6 @@ const HomePage = () => {
         <meta property="og:image" content={OG_IMAGE} />
         <meta property="og:locale" content="en_US" />
 
-        {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={DEFAULT_TITLE} />
         <meta name="twitter:description" content={DEFAULT_DESCRIPTION} />
@@ -78,22 +70,13 @@ const HomePage = () => {
         />
       </Head>
 
-      <Navbar />
-      <Hero1 />
-      <Exprience />
-      <section id="about">
-        <AboutHome />
-      </section>
-      <section id="portfolio">
-        <PorfolioSectionHome />
-      </section>
-      <TestSlider />
-      <section id="contact">
-        <ContactArea />
-      </section>
-      <Footer />
+      <main>
+        <VideoHero />
+        <Benefits />
+        <CtaBand />
+        <RiskDisclaimer />
+      </main>
+      <LandingFooter />
     </Fragment>
   );
-};
-
-export default HomePage;
+}
