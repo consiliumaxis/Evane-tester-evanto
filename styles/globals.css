@@ -13,9 +13,27 @@ body {
   min-height: 100%;
 }
 
+/* One continuous gradient, painted once on <html> and anchored to the
+ * viewport. Every section renders on top of this — no section paints its
+ * own background color, so no seams can appear between them.
+ * Footer is the only exception: it lays its own solid black on top. */
+html {
+  background-color: #0a0f1e;
+  background-image: linear-gradient(
+    180deg,
+    #0a0f1e 0%,
+    #080b1d 30%,
+    #060819 60%,
+    #04051a 100%
+  );
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
 body {
   font-family: var(--font-sans);
-  background: #000;
+  background: transparent;
   color: var(--text-primary);
   font-size: 16px;
   line-height: 1.6;
