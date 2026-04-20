@@ -176,10 +176,6 @@ export default function VideoBlock() {
         >
           <div ref={mountRef} className="vb__mount" />
           <div className="vb__overlay" aria-hidden="true" />
-          <div className="vb__corner vb__corner--tl" aria-hidden="true" />
-          <div className="vb__corner vb__corner--tr" aria-hidden="true" />
-          <div className="vb__corner vb__corner--bl" aria-hidden="true" />
-          <div className="vb__corner vb__corner--br" aria-hidden="true" />
 
           {!hasActivated && (
             <button
