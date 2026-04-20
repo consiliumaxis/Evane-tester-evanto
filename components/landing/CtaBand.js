@@ -6,11 +6,10 @@ export default function CtaBand() {
   return (
     <section className="cta-band" aria-label="Join">
       <div className="container">
-        <h2 className="cta-band__title">
-          Ready to see the next trade?
-        </h2>
+        <span className="eyebrow">Ready to see the desk</span>
+        <h2 className="cta-band__title">Join the channel.</h2>
         <Link href={CTA_INTERNAL_HREF}>
-          <a className="cta" data-testid="cta-secondary">Перейти в Telegram</a>
+          <a className="cta cta--lg" data-testid="cta-primary">Перейти в Telegram</a>
         </Link>
       </div>
     </section>
