@@ -91,6 +91,11 @@ main {
   margin: 0 0 22px;
 }
 
+.hd__accent {
+  color: var(--gold-bright);
+  font-weight: 800;
+}
+
 .hd__lead {
   font-family: var(--font);
   font-size: clamp(1rem, 1.35vw, 1.18rem);
@@ -106,7 +111,7 @@ main {
  * ========================================================================= */
 
 .vb {
-  padding: 40px 0 48px;
+  padding: 70px 0 48px;
   background: transparent;
 }
 
@@ -149,6 +154,14 @@ main {
    * cleanly regardless of how the browser composites it. */
   border-radius: var(--radius-video);
   overflow: hidden;
+  /* object-fit: cover equivalent for a YouTube iframe. The iframe is
+   * scaled up so the YouTube viewport always exceeds the 16:9 frame
+   * on at least one axis. The frame clips the overflow, which means
+   * any black pillar-bars (4:3 test clip) or letterbox (non-16:9
+   * production clip) are pushed outside the rounded container.
+   * When a clean 16:9 clip is wired in, set scale(1). */
+  transform: scale(1.38);
+  transform-origin: center center;
 }
 
 .vb__overlay {
