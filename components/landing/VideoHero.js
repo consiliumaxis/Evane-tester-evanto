@@ -222,7 +222,12 @@ export default function VideoHero() {
       </div>
       <div className="hero__overlay" aria-hidden="true" />
 
-      <div className="container hero__content">
+      <div
+        className={
+          'container hero__content' +
+          (hasActivated && !isPaused ? ' hero__content--hidden' : '')
+        }
+      >
         <span className="hero__eyebrow">Private Trading Desk</span>
         <h1 className="hero__title">
           The market rewards <em>discipline</em>.<br />
