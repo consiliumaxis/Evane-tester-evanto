@@ -1,10 +1,12 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-// Short, copyright-safe test video (Google's "Me at the zoo" — ~19s, embeddable).
-// Swap TEST_VIDEO_ID for the real promo clip when ready.
+// Short, copyright-safe test video hosted on YouTube (Google's "Me at the zoo",
+// the very first YouTube upload, ~19s, embeddable). Swap TEST_VIDEO_ID for the
+// real promo clip when you have one.
 const TEST_VIDEO_ID = 'jNQXAC9IVRw';
 const YT_API_SRC = 'https://www.youtube.com/iframe_api';
 
+// YouTube player state codes we care about.
 const YT_STATE_PLAYING = 1;
 const YT_STATE_PAUSED = 2;
 
@@ -16,6 +18,8 @@ function PlayIcon() {
   );
 }
 
+// Load the YouTube IFrame API once per page. Returns a promise that resolves
+// with window.YT when the global is ready.
 function loadYouTubeApi() {
   if (typeof window === 'undefined') return Promise.reject();
   if (window.YT && window.YT.Player) return Promise.resolve(window.YT);
@@ -39,21 +43,26 @@ function loadYouTubeApi() {
   return window.__ytApiPromise;
 }
 
-export default function VideoBlock() {
-  const blockRef = useRef(null);
+export default function VideoHero() {
+  const heroRef = useRef(null);
   const mountRef = useRef(null);
   const playerRef = useRef(null);
 
   const [isReady, setIsReady] = useState(false);
+  // hasActivated = user pressed the initial Play (unmuted + restart).
+  // From that point on the Play control switches to pause/resume.
   const [hasActivated, setHasActivated] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [inView, setInView] = useState(true);
+  const [heroInView, setHeroInView] = useState(true);
 
+  // Refs mirror state so the IntersectionObserver callback (stable across
+  // renders) can read the latest values without stale closures.
   const hasActivatedRef = useRef(false);
   useEffect(() => { hasActivatedRef.current = hasActivated; }, [hasActivated]);
-  const inViewRef = useRef(true);
-  useEffect(() => { inViewRef.current = inView; }, [inView]);
+  const heroInViewRef = useRef(true);
+  useEffect(() => { heroInViewRef.current = heroInView; }, [heroInView]);
 
+  // Boot the YouTube player.
   useEffect(() => {
     let cancelled = false;
 
@@ -78,7 +87,10 @@ export default function VideoBlock() {
           onReady: (e) => {
             try {
               e.target.mute();
-              if (inViewRef.current) e.target.playVideo();
+              // Only start playing if the hero is actually visible on load
+              // (e.g. the user may have opened the page already scrolled to
+              // a hash below the hero).
+              if (heroInViewRef.current) e.target.playVideo();
             } catch (_) {}
             if (!cancelled) setIsReady(true);
           },
@@ -99,8 +111,8 @@ export default function VideoBlock() {
     };
   }, []);
 
-  // Initial Play: unmute + restart from 0. After this fires once, the
-  // block switches to pause/resume UX.
+  // Initial Play click: unmute + restart from 0. The Play overlay unmounts
+  // and from here on the pause/resume UX takes over.
   const handlePlay = useCallback(() => {
     const p = playerRef.current;
     if (!p) return;
@@ -119,48 +131,59 @@ export default function VideoBlock() {
     if (!p || !hasActivatedRef.current) return;
     try {
       const state = typeof p.getPlayerState === 'function' ? p.getPlayerState() : null;
-      if (state === YT_STATE_PLAYING) p.pauseVideo();
-      else p.playVideo();
+      if (state === YT_STATE_PLAYING) {
+        p.pauseVideo();
+      } else {
+        p.playVideo();
+      }
     } catch (_) {}
   }, []);
 
-  // Click anywhere in the block (after activation) → toggle pause.
-  const handleBlockClick = useCallback((e) => {
+  // Click anywhere in the hero after activation → toggle pause.
+  // Before activation the hero still receives the initial Play button's click;
+  // this handler becomes relevant only once hasActivated flips to true.
+  const handleHeroClick = useCallback((e) => {
     if (!hasActivatedRef.current) return;
+    // Let any actual <a> / <button> inside the hero keep working normally.
     const tag = (e.target.tagName || '').toLowerCase();
     if (tag === 'a' || tag === 'button') return;
     togglePause();
   }, [togglePause]);
 
-  // Spacebar → toggle pause, scoped to when the block is in the viewport
-  // and the user is not typing in a form control. Does not hijack space
-  // anywhere else on the page.
+  // Spacebar → toggle pause, but ONLY while the hero is in the viewport and
+  // the user isn't typing in a form control. Otherwise space keeps its
+  // default behaviour (page scroll) and does not hijack the rest of the site.
   useEffect(() => {
-    if (!inView || !hasActivated) return;
+    if (!heroInView || !hasActivated) return;
     const onKey = (e) => {
       if (e.code !== 'Space' && e.key !== ' ') return;
       const t = e.target;
       const tag = (t && t.tagName ? t.tagName : '').toLowerCase();
       if (['input', 'textarea', 'select'].includes(tag) || (t && t.isContentEditable)) return;
+      // Don't steal space from our own focused Play/CTA buttons — they
+      // already handle it via click semantics.
       if (tag === 'button' || tag === 'a') return;
       e.preventDefault();
       togglePause();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [inView, hasActivated, togglePause]);
+  }, [heroInView, hasActivated, togglePause]);
 
-  // Pause when scrolled out of view. If we're still in the muted
-  // autoplay phase, resume quietly on re-enter. Once the user has
-  // activated (audio on) we never auto-resume without a new gesture.
+  // Pause automatically when the hero scrolls out of the viewport, both on
+  // desktop and on mobile. When it scrolls back in we only resume
+  // automatically if the video is still in its initial muted-autoplay
+  // phase — once the user has activated (= audio on) we do NOT auto-resume
+  // audio without a new user gesture.
   useEffect(() => {
-    const el = blockRef.current;
+    const el = heroRef.current;
     if (!el || typeof IntersectionObserver === 'undefined') return;
 
     const io = new IntersectionObserver(
       ([entry]) => {
         const visible = entry.isIntersecting && entry.intersectionRatio >= 0.25;
-        setInView(visible);
+        setHeroInView(visible);
+
         const p = playerRef.current;
         if (!p) return;
         try {
@@ -169,8 +192,12 @@ export default function VideoBlock() {
               p.pauseVideo();
             }
           } else if (!hasActivatedRef.current) {
+            // still in muted autoplay phase → resume quietly
             p.playVideo();
           }
+          // If the user has activated: do nothing on re-enter. The pause
+          // indicator stays visible and the user taps/clicks or hits space
+          // to resume.
         } catch (_) {}
       },
       { threshold: [0, 0.25, 0.6] }
@@ -182,41 +209,58 @@ export default function VideoBlock() {
 
   return (
     <section
-      ref={blockRef}
-      className="video-block"
-      aria-label="Intro video"
+      ref={heroRef}
+      className="hero"
+      aria-label="Intro"
+      onClick={handleHeroClick}
     >
-      <div className="container">
-        <div
-          className={`video-block__frame${isReady ? ' video-block__frame--ready' : ''}`}
-          onClick={handleBlockClick}
-        >
-          <div ref={mountRef} className="video-block__mount" />
-          <div className="video-block__overlay" aria-hidden="true" />
+      <div
+        className={`hero__video-wrap${isReady ? ' hero__video-wrap--ready' : ''}`}
+        aria-hidden="true"
+      >
+        <div ref={mountRef} className="hero__video-mount" />
+      </div>
+      <div className="hero__overlay" aria-hidden="true" />
 
-          {!hasActivated && (
-            <button
-              type="button"
-              className="video-block__play"
-              onClick={(e) => { e.stopPropagation(); handlePlay(); }}
-              aria-label="Play video with sound"
-            >
-              <PlayIcon />
-            </button>
-          )}
-
-          {hasActivated && isPaused && (
-            <div className="video-block__paused-indicator" aria-hidden="true">
-              <PlayIcon />
-            </div>
-          )}
-        </div>
+      <div className="container hero__content">
+        <span className="hero__eyebrow">Private Trading Desk</span>
+        <h1 className="hero__title">
+          The market rewards <em>discipline</em>.<br />
+          We trade it every day.
+        </h1>
+        <p className="hero__subtitle">
+          Institutional-grade signals, real-time commentary and a daily live review — delivered straight to your Telegram.
+        </p>
         {hasActivated && (
-          <p className="video-block__hint" aria-hidden="true">
-            Click the video or press space to pause / resume
+          <p className="hero__hint" aria-hidden="true">
+            Tap the video or press space to pause
           </p>
         )}
       </div>
+
+      {/* Initial big Play overlay — shown until the user activates. */}
+      {!hasActivated && (
+        <div className="hero__play-wrap">
+          <button
+            type="button"
+            className="hero__play"
+            onClick={(e) => { e.stopPropagation(); handlePlay(); }}
+            aria-label="Play video with sound"
+          >
+            <PlayIcon />
+          </button>
+        </div>
+      )}
+
+      {/* Pause indicator — appears after activation whenever the video is
+          paused, so the user knows tapping will resume it. */}
+      {hasActivated && isPaused && (
+        <div className="hero__pause-wrap" aria-hidden="true">
+          <div className="hero__pause-indicator">
+            <PlayIcon />
+          </div>
+        </div>
+      )}
     </section>
   );
 }
