@@ -6,7 +6,7 @@ export default function Headline() {
       <div className="container hd__inner">
         <span className="eyebrow">Private Trading Desk</span>
         <h1 className="hd__title">
-          The market rewards <em>discipline</em>.
+          The market rewards discipline.
           <br />
           We trade it every day.
         </h1>

@@ -18,13 +18,13 @@ body {
  * own background color, so no seams can appear between them.
  * Footer is the only exception: it lays its own solid black on top. */
 html {
-  background-color: #0a0f1e;
+  background-color: #0b0e14;
   background-image: linear-gradient(
     180deg,
-    #0a0f1e 0%,
-    #080b1d 30%,
-    #060819 60%,
-    #04051a 100%
+    #0b0e14 0%,
+    #090c12 30%,
+    #06080e 65%,
+    #030508 100%
   );
   background-attachment: fixed;
   background-repeat: no-repeat;
@@ -32,9 +32,9 @@ html {
 }
 
 body {
-  font-family: var(--font-sans);
+  font-family: var(--font);
   background: transparent;
-  color: var(--text-primary);
+  color: var(--text);
   font-size: 16px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -57,25 +57,25 @@ button {
 }
 
 a {
-  color: var(--accent);
+  color: var(--gold);
   text-decoration: none;
   transition: color 0.2s ease;
 }
 
 a:hover {
-  color: var(--accent-bright);
+  color: var(--gold-bright);
 }
 
 h1,
 h2,
 h3,
 h4 {
-  font-family: var(--font-serif);
-  color: var(--text-primary);
+  font-family: var(--font);
+  color: var(--text);
   margin: 0 0 0.5em;
   line-height: 1.15;
-  letter-spacing: 0.01em;
-  font-weight: 600;
+  letter-spacing: -0.01em;
+  font-weight: 700;
 }
 
 p {
