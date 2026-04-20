@@ -1,7 +1,9 @@
 import React, { Fragment } from 'react';
 import Head from 'next/head';
-import VideoHero from '../components/landing/VideoHero';
-import Benefits from '../components/landing/Benefits';
+import Headline from '../components/landing/Headline';
+import VideoBlock from '../components/landing/VideoBlock';
+import Reality from '../components/landing/Reality';
+import Usp from '../components/landing/Usp';
 import CtaBand from '../components/landing/CtaBand';
 import LandingFooter from '../components/landing/LandingFooter';
 import {
@@ -70,8 +72,10 @@ export default function Home() {
       </Head>
 
       <main>
-        <VideoHero />
-        <Benefits />
+        <Headline />
+        <VideoBlock />
+        <Reality />
+        <Usp />
         <CtaBand />
       </main>
       <LandingFooter />
