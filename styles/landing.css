@@ -115,11 +115,20 @@ main {
   background: transparent;
 }
 
-.vb__frame {
+/* Always-present 16:9 slot in the page flow. The actual .vb__frame is
+ * absolutely positioned to fill it when normal, and switches to position:
+ * fixed when mini-player mode kicks in — but this slot stays put, so the
+ * page height never collapses. */
+.vb__layout {
   position: relative;
   max-width: 1080px;
   margin: 0 auto;
   aspect-ratio: 16 / 9;
+}
+
+.vb__frame {
+  position: absolute;
+  inset: 0;
   overflow: hidden;
   border-radius: var(--radius-video);
   border: 1px solid var(--border-gold-soft);
@@ -140,6 +149,31 @@ main {
 
 .vb__frame:hover {
   border-color: var(--border-gold);
+}
+
+/* ----- Mini-player ---------------------------------------------------------
+ * Triggered by the IntersectionObserver in VideoBlock.js whenever the user
+ * has already activated the player (audio on) and scrolls the hero out of
+ * view. We do NOT remount the iframe — only toggle this class on the same
+ * .vb__frame element, so the YouTube player keeps playing without resync. */
+.vb__frame--mini {
+  position: fixed;
+  inset: auto 24px 24px auto;
+  width: min(360px, 38vw);
+  height: auto;
+  aspect-ratio: 16 / 9;
+  border-radius: 14px;
+  border-color: var(--border-gold);
+  z-index: 100;
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(0, 0, 0, 0.4);
+  animation: vb-mini-in 0.28s ease;
+}
+
+@keyframes vb-mini-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0);    }
 }
 
 .vb__mount,
@@ -262,6 +296,52 @@ main {
   text-transform: uppercase;
   color: var(--text-faint);
   text-align: center;
+}
+
+/* Pause / resume toggle that lives only inside the mini-player. Sits in the
+ * top-right corner of the mini frame. The whole frame is also tappable, but
+ * this button gives a clear, sized hit-target (especially on mobile). */
+.vb__mini-toggle {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(224, 189, 104, 0.45);
+  color: var(--gold-bright);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 3;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.vb__mini-toggle:hover,
+.vb__mini-toggle:focus-visible {
+  background: rgba(201, 164, 76, 0.25);
+  border-color: var(--gold-bright);
+  outline: none;
+}
+
+.vb__mini-toggle svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Shrink the centered "paused" badge when we're inside the mini frame so it
+ * doesn't dominate the small surface. */
+.vb__frame--mini .vb__paused {
+  width: 44px;
+  height: 44px;
+}
+
+.vb__frame--mini .vb__paused svg {
+  width: 16px;
+  height: 16px;
 }
 
 /* =========================================================================
@@ -501,6 +581,15 @@ main {
   .vb__mount,
   .vb__frame iframe,
   .vb__overlay { border-radius: 14px; }
+  .vb__frame--mini {
+    width: min(220px, 50vw);
+    inset: auto 14px 14px auto;
+    border-radius: 12px;
+  }
+  .vb__mini-toggle { width: 32px; height: 32px; top: 6px; right: 6px; }
+  .vb__mini-toggle svg { width: 14px; height: 14px; }
+  .vb__frame--mini .vb__paused { width: 36px; height: 36px; }
+  .vb__frame--mini .vb__paused svg { width: 14px; height: 14px; }
   .vb__play    { width: 72px; height: 72px; }
   .vb__play svg { width: 24px; height: 24px; }
   .vb__play::before { inset: -10px; }
