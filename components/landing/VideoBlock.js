@@ -16,6 +16,14 @@ function PlayIcon() {
   );
 }
 
+function PauseIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M8 5h3v14H8zM13 5h3v14h-3z" />
+    </svg>
+  );
+}
+
 function loadYouTubeApi() {
   if (typeof window === 'undefined') return Promise.reject();
   if (window.YT && window.YT.Player) return Promise.resolve(window.YT);
@@ -47,6 +55,9 @@ export default function VideoBlock() {
   const [hasActivated, setHasActivated] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [inView, setInView] = useState(true);
+  // Mini-player mode: the same DOM iframe is reparented (via CSS only) into
+  // a fixed corner panel so the video keeps playing seamlessly.
+  const [isMini, setIsMini] = useState(false);
 
   const hasActivatedRef = useRef(false);
   useEffect(() => { hasActivatedRef.current = hasActivated; }, [hasActivated]);
@@ -97,6 +108,8 @@ export default function VideoBlock() {
     };
   }, []);
 
+  // Initial Play: unmute + restart from 0. Only happens once, when the user
+  // first activates the player. After that the same control toggles pause.
   const handlePlay = useCallback(() => {
     const p = playerRef.current;
     if (!p) return;
@@ -120,6 +133,8 @@ export default function VideoBlock() {
     } catch (_) {}
   }, []);
 
+  // Click anywhere in the frame (after activation) toggles pause. Buttons /
+  // links inside the frame keep their own click semantics.
   const handleBlockClick = useCallback((e) => {
     if (!hasActivatedRef.current) return;
     const tag = (e.target.tagName || '').toLowerCase();
@@ -127,6 +142,9 @@ export default function VideoBlock() {
     togglePause();
   }, [togglePause]);
 
+  // Spacebar pause/resume. Active only while the main hero block is in view
+  // (we don't want space to hijack scrolling once the video is in the
+  // mini-player) and the user has already activated audio.
   useEffect(() => {
     if (!inView || !hasActivated) return;
     const onKey = (e) => {
@@ -142,6 +160,18 @@ export default function VideoBlock() {
     return () => window.removeEventListener('keydown', onKey);
   }, [inView, hasActivated, togglePause]);
 
+  // Viewport behaviour:
+  //   * Activated + scrolled out  → mini-player (video keeps playing).
+  //   * Activated + scrolled back → mini-player closes; main view resumes
+  //                                 the same video, same position (it's the
+  //                                 exact same iframe — only the wrapper's
+  //                                 CSS class flips, the player instance is
+  //                                 never destroyed or re-mounted).
+  //   * Not activated yet (muted autoplay phase)  → pause when out of view
+  //                                                 to save bandwidth, then
+  //                                                 quietly resume on
+  //                                                 re-enter. No mini-player
+  //                                                 in this phase.
   useEffect(() => {
     const el = blockRef.current;
     if (!el || typeof IntersectionObserver === 'undefined') return;
@@ -150,14 +180,23 @@ export default function VideoBlock() {
         const visible = entry.isIntersecting && entry.intersectionRatio >= 0.25;
         setInView(visible);
         const p = playerRef.current;
-        if (!p) return;
         try {
-          if (!visible) {
-            if (typeof p.getPlayerState === 'function' && p.getPlayerState() === YT_STATE_PLAYING) {
+          if (!visible && hasActivatedRef.current) {
+            // Activated → switch to mini, do NOT pause.
+            setIsMini(true);
+          } else if (!visible && !hasActivatedRef.current) {
+            // Muted autoplay phase → pause silently to save resources.
+            setIsMini(false);
+            if (p && typeof p.getPlayerState === 'function' &&
+                p.getPlayerState() === YT_STATE_PLAYING) {
               p.pauseVideo();
             }
-          } else if (!hasActivatedRef.current) {
-            p.playVideo();
+          } else {
+            // visible
+            setIsMini(false);
+            if (p && !hasActivatedRef.current) {
+              p.playVideo();
+            }
           }
         } catch (_) {}
       },
@@ -167,34 +206,55 @@ export default function VideoBlock() {
     return () => io.disconnect();
   }, []);
 
+  const frameClass =
+    'vb__frame' +
+    (isReady ? ' vb__frame--ready' : '') +
+    (isMini ? ' vb__frame--mini' : '');
+
   return (
     <section ref={blockRef} className="vb" aria-label="Intro video">
       <div className="container">
-        <div
-          className={'vb__frame' + (isReady ? ' vb__frame--ready' : '')}
-          onClick={handleBlockClick}
-        >
-          <div ref={mountRef} className="vb__mount" />
-          <div className="vb__overlay" aria-hidden="true" />
+        {/* Always-present 16:9 layout slot. It keeps the page height stable
+            even while the actual frame is detached into the corner mini. */}
+        <div className="vb__layout">
+          <div className={frameClass} onClick={handleBlockClick}>
+            <div ref={mountRef} className="vb__mount" />
+            <div className="vb__overlay" aria-hidden="true" />
 
-          {!hasActivated && (
-            <button
-              type="button"
-              className="vb__play"
-              onClick={(e) => { e.stopPropagation(); handlePlay(); }}
-              aria-label="Play video with sound"
-            >
-              <PlayIcon />
-            </button>
-          )}
+            {!hasActivated && (
+              <button
+                type="button"
+                className="vb__play"
+                onClick={(e) => { e.stopPropagation(); handlePlay(); }}
+                aria-label="Play video with sound"
+              >
+                <PlayIcon />
+              </button>
+            )}
 
-          {hasActivated && isPaused && (
-            <div className="vb__paused" aria-hidden="true">
-              <PlayIcon />
-            </div>
-          )}
+            {hasActivated && isPaused && (
+              <div className="vb__paused" aria-hidden="true">
+                <PlayIcon />
+              </div>
+            )}
+
+            {/* Visible only in mini mode: shows the current play / pause
+                state and gives a clear tap target on mobile. The whole
+                frame is also tappable, but the icon makes the affordance
+                obvious. */}
+            {isMini && (
+              <button
+                type="button"
+                className="vb__mini-toggle"
+                onClick={(e) => { e.stopPropagation(); togglePause(); }}
+                aria-label={isPaused ? 'Resume video' : 'Pause video'}
+              >
+                {isPaused ? <PlayIcon /> : <PauseIcon />}
+              </button>
+            )}
+          </div>
         </div>
-        {hasActivated && (
+        {hasActivated && !isMini && (
           <p className="vb__hint" aria-hidden="true">
             Click the video or press space to pause / resume
           </p>
