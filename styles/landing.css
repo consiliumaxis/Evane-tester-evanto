@@ -169,6 +169,15 @@ main {
     0 30px 80px rgba(0, 0, 0, 0.65),
     0 0 0 1px rgba(0, 0, 0, 0.4);
   animation: vb-mini-in 0.28s ease;
+  /* Grab-cursor affordance + prevent touch scroll while dragging. */
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.vb__frame--mini:active {
+  cursor: grabbing;
 }
 
 @keyframes vb-mini-in {
@@ -298,50 +307,90 @@ main {
   text-align: center;
 }
 
-/* Pause / resume toggle that lives only inside the mini-player. Sits in the
- * top-right corner of the mini frame. The whole frame is also tappable, but
- * this button gives a clear, sized hit-target (especially on mobile). */
-.vb__mini-toggle {
+/* ---- Mini-player chrome ---------------------------------------------------
+ * Close button in the top-right corner, drag-grip affordance in the top-left,
+ * and a scaled-down paused indicator in the center. The frame itself is the
+ * drag target; these are just the static UI on top. */
+
+.vb__mini-close {
   position: absolute;
   top: 8px;
   right: 8px;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.55);
-  border: 1px solid rgba(224, 189, 104, 0.45);
-  color: var(--gold-bright);
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   z-index: 3;
+  cursor: pointer;
   transition: background 0.2s ease, border-color 0.2s ease;
 }
 
-.vb__mini-toggle:hover,
-.vb__mini-toggle:focus-visible {
-  background: rgba(201, 164, 76, 0.25);
+.vb__mini-close:hover,
+.vb__mini-close:focus-visible {
+  background: rgba(224, 189, 104, 0.22);
   border-color: var(--gold-bright);
+  color: var(--gold-bright);
   outline: none;
 }
 
-.vb__mini-toggle svg {
-  width: 16px;
-  height: 16px;
+.vb__mini-close svg {
+  width: 14px;
+  height: 14px;
 }
 
-/* Shrink the centered "paused" badge when we're inside the mini frame so it
- * doesn't dominate the small surface. */
-.vb__frame--mini .vb__paused {
+.vb__mini-grip {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: grid;
+  grid-template-columns: repeat(2, 4px);
+  gap: 3px;
+  padding: 4px 5px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.vb__mini-grip span {
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.vb__mini-paused {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   width: 44px;
   height: 44px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(224, 189, 104, 0.4);
+  color: var(--gold-bright);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  pointer-events: none;
+  z-index: 2;
+  animation: vb-fade-in 0.18s ease;
 }
 
-.vb__frame--mini .vb__paused svg {
+.vb__mini-paused svg {
   width: 16px;
   height: 16px;
+  transform: translateX(2px);
 }
 
 /* =========================================================================
@@ -586,10 +635,12 @@ main {
     inset: auto 14px 14px auto;
     border-radius: 12px;
   }
-  .vb__mini-toggle { width: 32px; height: 32px; top: 6px; right: 6px; }
-  .vb__mini-toggle svg { width: 14px; height: 14px; }
-  .vb__frame--mini .vb__paused { width: 36px; height: 36px; }
-  .vb__frame--mini .vb__paused svg { width: 14px; height: 14px; }
+  .vb__mini-close { width: 28px; height: 28px; top: 6px; right: 6px; }
+  .vb__mini-close svg { width: 12px; height: 12px; }
+  .vb__mini-grip   { top: 8px; left: 8px; padding: 3px 4px; gap: 2px; }
+  .vb__mini-grip span { width: 3px; height: 3px; }
+  .vb__mini-paused { width: 36px; height: 36px; }
+  .vb__mini-paused svg { width: 14px; height: 14px; }
   .vb__play    { width: 72px; height: 72px; }
   .vb__play svg { width: 24px; height: 24px; }
   .vb__play::before { inset: -10px; }
