@@ -121,11 +121,15 @@ main {
  * page height never collapses. */
 .vb__layout {
   position: relative;
-  max-width: 1080px;
+  max-width: 1200px;
   margin: 0 auto;
   aspect-ratio: 16 / 9;
 }
 
+/* Creators-club-style presentation: a prominent but calm video panel.
+ * One clean rounded frame, subtle gold hairline, deep soft shadow,
+ * optional ambient glow spilling under the video. No chrome, no overlay
+ * caption, nothing to compete with the content itself. */
 .vb__frame {
   position: absolute;
   inset: 0;
@@ -133,9 +137,12 @@ main {
   border-radius: var(--radius-video);
   border: 1px solid var(--border-gold-soft);
   background: #000;
-  box-shadow: var(--shadow-video);
+  box-shadow:
+    0 50px 140px -70px rgba(0, 0, 0, 0.95),
+    0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 0 80px -40px rgba(201, 164, 76, 0.25);
   opacity: 0;
-  transition: opacity 0.6s ease, border-color 0.3s ease;
+  transition: opacity 0.6s ease, border-color 0.3s ease, transform 0.4s ease;
   cursor: pointer;
   /* Force iframe corners to clip to the rounded frame on every engine,
    * including Safari which occasionally ignores overflow: hidden on
@@ -222,25 +229,29 @@ main {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 96px;
-  height: 96px;
+  width: 108px;
+  height: 108px;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.5);
-  border: 1.2px solid rgba(224, 189, 104, 0.55);
+  background: rgba(10, 13, 20, 0.55);
+  border: 1.5px solid rgba(224, 189, 104, 0.65);
   color: var(--gold-bright);
   display: flex;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  transition: transform 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.3),
+    0 20px 60px -20px rgba(224, 189, 104, 0.35),
+    0 0 40px -10px rgba(224, 189, 104, 0.25);
+  transition: transform 0.25s ease, background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
   z-index: 2;
 }
 
 .vb__play::before {
   content: '';
   position: absolute;
-  inset: -12px;
+  inset: -14px;
   border-radius: 999px;
   border: 1px solid rgba(224, 189, 104, 0.22);
   animation: vb-pulse 2.6s ease-out infinite;
@@ -248,9 +259,13 @@ main {
 
 .vb__play:hover,
 .vb__play:focus-visible {
-  background: rgba(201, 164, 76, 0.22);
+  background: rgba(201, 164, 76, 0.2);
   border-color: var(--gold-bright);
-  transform: translate(-50%, -50%) scale(1.04);
+  transform: translate(-50%, -50%) scale(1.05);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 24px 70px -20px rgba(224, 189, 104, 0.5),
+    0 0 60px -10px rgba(224, 189, 104, 0.35);
   outline: none;
 }
 
@@ -428,24 +443,67 @@ main {
 }
 
 /* =========================================================================
- * 4. CTA
+ * 4. CTA — two-column "content + portrait" band
  * ========================================================================= */
 
 .cta-band {
   padding: 48px 0 96px;
-  text-align: center;
   background: transparent;
+}
+
+.cta-band__grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  grid-template-areas: "content portrait";
+  gap: 72px;
+  align-items: center;
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+.cta-band__content {
+  grid-area: content;
+  text-align: left;
+}
+
+.cta-band__portrait {
+  grid-area: portrait;
+  justify-self: center;
+  width: 100%;
+  max-width: 360px;
+  aspect-ratio: 3 / 4;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid var(--border-gold);
+  background: #000;
+  box-shadow:
+    0 30px 80px -40px rgba(0, 0, 0, 0.9),
+    0 0 0 1px rgba(0, 0, 0, 0.3),
+    0 0 40px -20px rgba(201, 164, 76, 0.28);
+}
+
+.cta-band__portrait-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 15%;
+  display: block;
 }
 
 .cta-band__title {
   font-family: var(--font);
   font-weight: 700;
-  font-size: clamp(1.7rem, 3.2vw, 2.3rem);
-  line-height: 1.15;
-  letter-spacing: -0.015em;
+  font-size: clamp(1.8rem, 3.4vw, 2.6rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
   color: var(--text);
-  margin: 0 auto 32px;
-  max-width: 560px;
+  margin: 0 0 28px;
+  max-width: 420px;
+}
+
+.cta-band__action {
+  display: flex;
+  justify-content: flex-start;
 }
 
 .cta {
@@ -652,6 +710,19 @@ main {
   .rl__text    { line-height: 1.65; }
 
   .cta-band    { padding: 36px 0 64px; }
+  .cta-band__grid {
+    grid-template-columns: 1fr;
+    grid-template-areas: "portrait" "content";
+    gap: 28px;
+  }
+  .cta-band__content { text-align: center; }
+  .cta-band__action  { justify-content: center; }
+  .cta-band__title   { margin: 0 auto 20px; max-width: 460px; }
+  .cta-band__portrait {
+    max-width: 240px;
+    aspect-ratio: 3 / 4;
+    border-radius: 14px;
+  }
 
   .footer      { padding: 48px 0 32px; }
   .footer__brand-row { gap: 12px; padding-bottom: 20px; }
@@ -672,6 +743,7 @@ main {
   .vb__overlay { border-radius: 12px; }
   .rl       { padding: 28px 0 12px; }
   .cta-band { padding: 24px 0 48px; }
+  .cta-band__portrait { max-width: 200px; border-radius: 12px; }
 }
 
 /* =========================================================================
