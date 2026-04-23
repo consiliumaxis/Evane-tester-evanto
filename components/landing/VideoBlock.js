@@ -32,8 +32,35 @@ function IconPause() { return (<svg viewBox="0 0 24 24" fill="currentColor" aria
 function IconClose() { return (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>); }
 function IconVolume() { return (<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 10v4h4l5 4V6L7 10H3zm13.5 2A4.5 4.5 0 0 0 14 8.1v7.83A4.5 4.5 0 0 0 16.5 12zM14 4.1v2.06A8 8 0 0 1 14 19.83v2.06A10 10 0 0 0 14 4.1z"/></svg>); }
 function IconMuted()  { return (<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 10v4h4l5 4V6L7 10H3zm13.59 2L19 9.41 17.59 8 15 10.59 12.41 8 11 9.41 13.59 12 11 14.59 12.41 16 15 13.41 17.59 16 19 14.59 16.59 12z"/></svg>); }
-function IconCC()     { return (<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.8"/><path d="M9 11c-.6-.6-1.4-1-2.2-1-1.5 0-2.8 1.3-2.8 3s1.3 3 2.8 3c.8 0 1.6-.4 2.2-1M17 11c-.6-.6-1.4-1-2.2-1-1.5 0-2.8 1.3-2.8 3s1.3 3 2.8 3c.8 0 1.6-.4 2.2-1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" fill="none"/></svg>); }
-function IconGear()   { return (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.3.2.64.2 1s-.06.7-.2 1Z"/></svg>); }
+function IconCC() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <rect x="2.5" y="5.5" width="19" height="13" rx="2.5" fill="none" stroke="currentColor" strokeWidth="1.6" />
+      <text
+        x="12"
+        y="12"
+        textAnchor="middle"
+        dominantBaseline="central"
+        fontSize="7.5"
+        fontWeight="700"
+        letterSpacing="0.5"
+        fontFamily="Inter, system-ui, sans-serif"
+      >
+        CC
+      </text>
+    </svg>
+  );
+}
+
+function IconGear() {
+  // Material-style settings icon, path strictly within the 24×24 viewBox so
+  // nothing gets clipped on the right edge of small icon buttons.
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54A.484.484 0 0 0 13.91 2h-3.84a.484.484 0 0 0-.49.42l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.71 8.48c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94 0 .32.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.26.42.49.42h3.84c.23 0 .44-.18.49-.42l.36-2.54c.59-.24 1.13-.57 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.03-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
+    </svg>
+  );
+}
 
 function loadYouTubeApi() {
   if (typeof window === 'undefined') return Promise.reject();
@@ -505,36 +532,38 @@ export default function VideoBlock() {
             {/* Custom main controls — hidden when the panel is in mini mode. */}
             {!isMini && (
               <React.Fragment>
-                {/* Seek bar: thin full-width progress track with a draggable
-                    handle. Lives in its own .vb__ctrl row so the overlay
-                    pointer-events rules apply and the frame's tap-to-pause
-                    / drag handlers can distinguish it. */}
-                <div className="vb__ctrl vb__ctrl-seek">
-                  <div
-                    ref={seekRef}
-                    className="vb__seek"
-                    onPointerDown={handleSeekDown}
-                    onPointerMove={handleSeekMove}
-                    onPointerUp={handleSeekUp}
-                    onPointerCancel={handleSeekUp}
-                    role="slider"
-                    aria-label="Seek"
-                    aria-valuemin={0}
-                    aria-valuemax={Math.round(duration || 0)}
-                    aria-valuenow={Math.round(currentTime || 0)}
-                    tabIndex={0}
-                  >
-                    <div className="vb__seek-track" />
+                {/* Seek bar: mounts only after the user has triggered the
+                    first Play (same moment the video starts with sound). It
+                    stays mounted after that — visible during both play and
+                    pause. A fresh page load starts without it again. */}
+                {hasActivated && (
+                  <div className="vb__ctrl vb__ctrl-seek">
                     <div
-                      className="vb__seek-fill"
-                      style={{ width: duration ? `${(currentTime / duration) * 100}%` : '0%' }}
-                    />
-                    <div
-                      className="vb__seek-handle"
-                      style={{ left: duration ? `${(currentTime / duration) * 100}%` : '0%' }}
-                    />
+                      ref={seekRef}
+                      className="vb__seek"
+                      onPointerDown={handleSeekDown}
+                      onPointerMove={handleSeekMove}
+                      onPointerUp={handleSeekUp}
+                      onPointerCancel={handleSeekUp}
+                      role="slider"
+                      aria-label="Seek"
+                      aria-valuemin={0}
+                      aria-valuemax={Math.round(duration || 0)}
+                      aria-valuenow={Math.round(currentTime || 0)}
+                      tabIndex={0}
+                    >
+                      <div className="vb__seek-track" />
+                      <div
+                        className="vb__seek-fill"
+                        style={{ width: duration ? `${(currentTime / duration) * 100}%` : '0%' }}
+                      />
+                      <div
+                        className="vb__seek-handle"
+                        style={{ left: duration ? `${(currentTime / duration) * 100}%` : '0%' }}
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div className="vb__ctrl vb__ctrl-left">
                   <button

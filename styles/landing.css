@@ -421,8 +421,10 @@ main {
 }
 
 .vb__icon-btn svg {
-  width: 17px;
-  height: 17px;
+  width: 18px;
+  height: 18px;
+  display: block;
+  overflow: visible;
 }
 
 .vb__quality { position: relative; }
