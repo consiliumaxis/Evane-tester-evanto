@@ -224,102 +224,182 @@ main {
     linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.22) 100%);
 }
 
-.vb__play {
+/* ---- Custom video controls -----------------------------------------------
+ * All standard YouTube UI is hidden (controls: 0). We layer a custom
+ * control set on top of the iframe:
+ *   - bottom-left: pill Play / Pause button with label.
+ *   - bottom-right: row of icon buttons — quality (with dropdown), mute,
+ *     captions. Visible only when the panel is NOT in mini mode.
+ */
+
+.vb__ctrl {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 108px;
-  height: 108px;
-  border-radius: 999px;
-  background: rgba(10, 13, 20, 0.55);
-  border: 1.5px solid rgba(224, 189, 104, 0.65);
-  color: var(--gold-bright);
+  z-index: 4;
+  pointer-events: none;
+}
+
+.vb__ctrl > * {
+  pointer-events: auto;
+}
+
+/* In the mini-player we fall back to the simpler grip + close + center
+ * paused-indicator chrome; none of the main overlay controls render. */
+.vb__frame--mini .vb__ctrl { display: none; }
+
+.vb__ctrl-left {
+  left: 20px;
+  bottom: 18px;
+}
+
+.vb__ctrl-right {
+  right: 20px;
+  bottom: 18px;
   display: flex;
+  gap: 8px;
   align-items: center;
-  justify-content: center;
+}
+
+.vb__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 22px 12px 18px;
+  border-radius: 999px;
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text);
+  background: rgba(10, 13, 20, 0.72);
+  border: 1px solid rgba(224, 189, 104, 0.4);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   box-shadow:
-    0 0 0 1px rgba(0, 0, 0, 0.3),
-    0 20px 60px -20px rgba(224, 189, 104, 0.35),
-    0 0 40px -10px rgba(224, 189, 104, 0.25);
-  transition: transform 0.25s ease, background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
-  z-index: 2;
+    0 8px 28px -10px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(0, 0, 0, 0.35);
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease, color 0.2s ease;
+  cursor: pointer;
 }
 
-.vb__play::before {
-  content: '';
-  position: absolute;
-  inset: -14px;
-  border-radius: 999px;
-  border: 1px solid rgba(224, 189, 104, 0.22);
-  animation: vb-pulse 2.6s ease-out infinite;
-}
-
-.vb__play:hover,
-.vb__play:focus-visible {
-  background: rgba(201, 164, 76, 0.2);
+.vb__pill:hover,
+.vb__pill:focus-visible {
+  background: rgba(201, 164, 76, 0.22);
   border-color: var(--gold-bright);
-  transform: translate(-50%, -50%) scale(1.05);
-  box-shadow:
-    0 0 0 1px rgba(0, 0, 0, 0.35),
-    0 24px 70px -20px rgba(224, 189, 104, 0.5),
-    0 0 60px -10px rgba(224, 189, 104, 0.35);
+  color: var(--gold-bright);
+  transform: translateY(-1px);
   outline: none;
 }
 
-.vb__play svg {
-  width: 30px;
-  height: 30px;
-  transform: translateX(3px);
-}
-
-@keyframes vb-pulse {
-  0%   { transform: scale(1);    opacity: 0.8; }
-  100% { transform: scale(1.35); opacity: 0;   }
-}
-
-.vb__paused {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 72px;
-  height: 72px;
+.vb__pill-icon {
+  width: 22px;
+  height: 22px;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(224, 189, 104, 0.4);
-  color: var(--gold-bright);
   display: flex;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  pointer-events: none;
-  z-index: 2;
-  animation: vb-fade-in 0.18s ease;
+  background: var(--gold);
+  color: #0a0d14;
+  flex-shrink: 0;
 }
 
-.vb__paused svg {
-  width: 24px;
-  height: 24px;
-  transform: translateX(2px);
+.vb__pill:hover .vb__pill-icon,
+.vb__pill:focus-visible .vb__pill-icon {
+  background: var(--gold-bright);
+}
+
+.vb__pill-icon svg {
+  width: 12px;
+  height: 12px;
+}
+
+.vb__icon-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 13, 20, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(245, 242, 234, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow:
+    0 6px 20px -8px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.vb__icon-btn:hover,
+.vb__icon-btn:focus-visible {
+  border-color: var(--border-gold);
+  color: var(--gold-bright);
+  outline: none;
+}
+
+.vb__icon-btn--on {
+  border-color: var(--gold);
+  color: var(--gold-bright);
+  background: rgba(201, 164, 76, 0.18);
+}
+
+.vb__icon-btn svg {
+  width: 17px;
+  height: 17px;
+}
+
+.vb__quality { position: relative; }
+
+.vb__quality-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  min-width: 120px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: rgba(10, 13, 20, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.85);
+  z-index: 5;
+  animation: vb-fade-in 0.15s ease;
+}
+
+.vb__quality-item {
+  appearance: none;
+  padding: 8px 12px;
+  text-align: left;
+  font-family: var(--font);
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--text-soft);
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.vb__quality-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--gold-bright);
+}
+
+.vb__quality-item--active {
+  color: var(--gold-bright);
+  background: rgba(201, 164, 76, 0.12);
 }
 
 @keyframes vb-fade-in {
   from { opacity: 0; }
   to   { opacity: 1; }
-}
-
-.vb__hint {
-  margin: 18px auto 0;
-  font-family: var(--font);
-  font-size: 0.72rem;
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-  text-align: center;
 }
 
 /* ---- Mini-player chrome ---------------------------------------------------
@@ -697,12 +777,14 @@ main {
   .vb__mini-grip span { width: 3px; height: 3px; }
   .vb__mini-paused { width: 36px; height: 36px; }
   .vb__mini-paused svg { width: 14px; height: 14px; }
-  .vb__play    { width: 72px; height: 72px; }
-  .vb__play svg { width: 24px; height: 24px; }
-  .vb__play::before { inset: -10px; }
-  .vb__paused  { width: 60px; height: 60px; }
-  .vb__paused svg { width: 20px; height: 20px; }
-  .vb__hint    { margin-top: 14px; letter-spacing: 0.24em; }
+
+  .vb__ctrl-left  { left: 12px; bottom: 12px; }
+  .vb__ctrl-right { right: 12px; bottom: 12px; gap: 6px; }
+  .vb__pill       { padding: 10px 16px 10px 12px; font-size: 0.72rem; letter-spacing: 0.12em; gap: 8px; }
+  .vb__pill-icon  { width: 20px; height: 20px; }
+  .vb__pill-icon svg { width: 10px; height: 10px; }
+  .vb__icon-btn   { width: 40px; height: 40px; }
+  .vb__icon-btn svg { width: 18px; height: 18px; }
 
   .rl          { padding: 40px 0 20px; }
   .rl__text    { line-height: 1.65; }

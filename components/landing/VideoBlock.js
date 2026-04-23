@@ -8,28 +8,32 @@ const YT_API_SRC = 'https://www.youtube.com/iframe_api';
 const YT_STATE_PLAYING = 1;
 const YT_STATE_PAUSED = 2;
 
-// If the pointer moved less than this many CSS pixels between pointerdown
-// and pointerup we treat the gesture as a tap (pause toggle); otherwise
-// it's a drag (new position).
 const DRAG_CLICK_THRESHOLD = 6;
-// Keep the mini-player a few px away from the viewport edges.
 const MINI_MARGIN = 8;
 
-function PlayIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M8 5.14v13.72c0 .79.87 1.27 1.54.85l10.79-6.86a1 1 0 0 0 0-1.7L9.54 4.29C8.87 3.87 8 4.35 8 5.14Z" />
-    </svg>
-  );
-}
+// Human-readable labels for YouTube quality codes.
+const QUALITY_LABELS = {
+  highres: '4K+',
+  hd2160: '2160p',
+  hd1440: '1440p',
+  hd1080: '1080p',
+  hd720: '720p',
+  large: '480p',
+  medium: '360p',
+  small: '240p',
+  tiny: '144p',
+  auto: 'Auto',
+};
+const QUALITY_ORDER = ['highres','hd2160','hd1440','hd1080','hd720','large','medium','small','tiny','auto'];
 
-function CloseIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-      <path d="M6 6l12 12M18 6L6 18" />
-    </svg>
-  );
-}
+// ---------- icons ----------
+function IconPlay()  { return (<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.14v13.72c0 .79.87 1.27 1.54.85l10.79-6.86a1 1 0 0 0 0-1.7L9.54 4.29C8.87 3.87 8 4.35 8 5.14Z"/></svg>); }
+function IconPause() { return (<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5h3v14H8zM13 5h3v14h-3z"/></svg>); }
+function IconClose() { return (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>); }
+function IconVolume() { return (<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 10v4h4l5 4V6L7 10H3zm13.5 2A4.5 4.5 0 0 0 14 8.1v7.83A4.5 4.5 0 0 0 16.5 12zM14 4.1v2.06A8 8 0 0 1 14 19.83v2.06A10 10 0 0 0 14 4.1z"/></svg>); }
+function IconMuted()  { return (<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 10v4h4l5 4V6L7 10H3zm13.59 2L19 9.41 17.59 8 15 10.59 12.41 8 11 9.41 13.59 12 11 14.59 12.41 16 15 13.41 17.59 16 19 14.59 16.59 12z"/></svg>); }
+function IconCC()     { return (<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.8"/><path d="M9 11c-.6-.6-1.4-1-2.2-1-1.5 0-2.8 1.3-2.8 3s1.3 3 2.8 3c.8 0 1.6-.4 2.2-1M17 11c-.6-.6-1.4-1-2.2-1-1.5 0-2.8 1.3-2.8 3s1.3 3 2.8 3c.8 0 1.6-.4 2.2-1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" fill="none"/></svg>); }
+function IconGear()   { return (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.3.2.64.2 1s-.06.7-.2 1Z"/></svg>); }
 
 function loadYouTubeApi() {
   if (typeof window === 'undefined') return Promise.reject();
@@ -58,18 +62,20 @@ export default function VideoBlock() {
   const mountRef = useRef(null);
   const frameRef = useRef(null);
   const playerRef = useRef(null);
+  const qualityPanelRef = useRef(null);
 
   const [isReady, setIsReady] = useState(false);
   const [hasActivated, setHasActivated] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+  const [ccOn, setCcOn] = useState(false);
+  const [qualities, setQualities] = useState([]);
+  const [currentQuality, setCurrentQuality] = useState('auto');
+  const [qualityOpen, setQualityOpen] = useState(false);
+
   const [inView, setInView] = useState(true);
   const [isMini, setIsMini] = useState(false);
-  // User clicked the close button in the mini-player. Stays true until the
-  // video starts playing again (re-activation) — at which point we allow
-  // the mini-player to come back on subsequent scroll-outs.
   const [isMiniDismissed, setIsMiniDismissed] = useState(false);
-  // Custom position of the mini-player after a drag. { x, y } in CSS px.
-  // null = use the default bottom-right corner via CSS.
   const [miniPos, setMiniPos] = useState(null);
 
   const hasActivatedRef = useRef(false);
@@ -79,9 +85,8 @@ export default function VideoBlock() {
   const isMiniDismissedRef = useRef(false);
   useEffect(() => { isMiniDismissedRef.current = isMiniDismissed; }, [isMiniDismissed]);
 
-  // Boot the YouTube player (exactly once per mount). Same player instance
-  // is reused for main view, mini-player and all state toggles — there is
-  // never a second player, so sync is intrinsic.
+  // Boot the YouTube player exactly once. Standard YouTube controls are
+  // suppressed (controls:0) — we layer our own custom overlay on top.
   useEffect(() => {
     let cancelled = false;
     loadYouTubeApi().then((YT) => {
@@ -100,12 +105,18 @@ export default function VideoBlock() {
           fs: 0,
           loop: 1,
           playlist: TEST_VIDEO_ID,
+          cc_load_policy: 0,
+          cc_lang_pref: 'en',
         },
         events: {
           onReady: (e) => {
             try {
               e.target.mute();
               if (inViewRef.current) e.target.playVideo();
+              if (typeof e.target.getAvailableQualityLevels === 'function') {
+                const q = e.target.getAvailableQualityLevels() || [];
+                setQualities(q);
+              }
             } catch (_) {}
             if (!cancelled) setIsReady(true);
           },
@@ -113,12 +124,24 @@ export default function VideoBlock() {
             if (cancelled) return;
             if (e.data === YT_STATE_PLAYING) {
               setIsPaused(false);
-              // Whenever the video resumes playing we re-enable the
-              // mini-player for future scroll-outs.
               setIsMiniDismissed(false);
+              // Quality list sometimes populates only after PLAYING.
+              try {
+                if (typeof e.target.getAvailableQualityLevels === 'function') {
+                  const q = e.target.getAvailableQualityLevels() || [];
+                  if (q.length) setQualities(q);
+                }
+                if (typeof e.target.getPlaybackQuality === 'function') {
+                  setCurrentQuality(e.target.getPlaybackQuality() || 'auto');
+                }
+              } catch (_) {}
             } else if (e.data === YT_STATE_PAUSED) {
               setIsPaused(true);
             }
+          },
+          onPlaybackQualityChange: (e) => {
+            if (cancelled) return;
+            setCurrentQuality(e.data || 'auto');
           },
         },
       });
@@ -132,8 +155,9 @@ export default function VideoBlock() {
     };
   }, []);
 
-  // Initial Play: unmute + restart from 0. After this the Play overlay
-  // unmounts and pause/resume UX takes over.
+  // --------- Player actions ---------
+
+  // First activation: unmute + restart from 0.
   const handlePlay = useCallback(() => {
     const p = playerRef.current;
     if (!p) return;
@@ -145,6 +169,7 @@ export default function VideoBlock() {
     } catch (_) {}
     setHasActivated(true);
     setIsPaused(false);
+    setIsMuted(false);
     setIsMiniDismissed(false);
   }, []);
 
@@ -158,9 +183,83 @@ export default function VideoBlock() {
     } catch (_) {}
   }, []);
 
-  // Close (X) button in the mini-player: pause the shared video and hide
-  // the mini-player. It will not reappear until the user plays the video
-  // again from the hero (that resets isMiniDismissed via onStateChange).
+  // Bottom-left pill. Before activation it is the one big Play control.
+  // After activation it toggles Play/Pause.
+  const handlePlayPause = useCallback((e) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+    if (!hasActivatedRef.current) handlePlay();
+    else togglePause();
+  }, [handlePlay, togglePause]);
+
+  const handleMute = useCallback((e) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+    const p = playerRef.current;
+    if (!p) return;
+    if (!hasActivatedRef.current) {
+      // Turning sound on from the muted autoplay phase is effectively an
+      // activation — go through the same seek+unmute+play path so the
+      // video restarts from the beginning with sound, per spec.
+      handlePlay();
+      return;
+    }
+    try {
+      if (isMuted) {
+        p.unMute();
+        if (typeof p.setVolume === 'function') p.setVolume(100);
+        setIsMuted(false);
+      } else {
+        p.mute();
+        setIsMuted(true);
+      }
+    } catch (_) {}
+  }, [isMuted, handlePlay]);
+
+  const handleCC = useCallback((e) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+    const p = playerRef.current;
+    if (!p) return;
+    try {
+      if (ccOn) {
+        if (typeof p.unloadModule === 'function') p.unloadModule('captions');
+      } else {
+        if (typeof p.loadModule === 'function') p.loadModule('captions');
+        if (typeof p.setOption === 'function') {
+          p.setOption('captions', 'reload', true);
+        }
+      }
+    } catch (_) {}
+    setCcOn((v) => !v);
+  }, [ccOn]);
+
+  const handleQualityToggle = useCallback((e) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+    setQualityOpen((v) => !v);
+  }, []);
+
+  const handleQualityPick = useCallback((q) => (e) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+    const p = playerRef.current;
+    if (p && typeof p.setPlaybackQuality === 'function') {
+      try { p.setPlaybackQuality(q); } catch (_) {}
+    }
+    setCurrentQuality(q);
+    setQualityOpen(false);
+  }, []);
+
+  // Close quality menu when clicking elsewhere.
+  useEffect(() => {
+    if (!qualityOpen) return;
+    const onDocDown = (ev) => {
+      const el = qualityPanelRef.current;
+      if (el && el.contains(ev.target)) return;
+      setQualityOpen(false);
+    };
+    document.addEventListener('pointerdown', onDocDown, true);
+    return () => document.removeEventListener('pointerdown', onDocDown, true);
+  }, [qualityOpen]);
+
+  // --------- Mini-player drag + close ---------
+
   const handleCloseMini = useCallback((e) => {
     if (e && e.stopPropagation) e.stopPropagation();
     const p = playerRef.current;
@@ -171,19 +270,7 @@ export default function VideoBlock() {
     setIsMini(false);
   }, []);
 
-  // ---------------- Drag ----------------
-  // Pointer-based drag that works for mouse, touch and stylus. We use
-  // setPointerCapture so drags that leave the frame bounds still fire
-  // events on our element. A tap (< threshold) falls through to
-  // togglePause so clicking the mini to pause still works.
-  const dragRef = useRef({
-    pointerId: null,
-    startX: 0,
-    startY: 0,
-    originX: 0,
-    originY: 0,
-    maxMove: 0,
-  });
+  const dragRef = useRef({ pointerId: null, startX: 0, startY: 0, originX: 0, originY: 0, maxMove: 0 });
 
   const clampToViewport = (x, y) => {
     const f = frameRef.current;
@@ -200,7 +287,6 @@ export default function VideoBlock() {
 
   const handlePointerDown = useCallback((e) => {
     if (!isMini) return;
-    // Don't start a drag from the close button — let the button handle it.
     if (e.target && e.target.closest && e.target.closest('.vb__mini-close')) return;
     const f = frameRef.current;
     if (!f) return;
@@ -234,23 +320,23 @@ export default function VideoBlock() {
     const f = frameRef.current;
     if (f) { try { f.releasePointerCapture(e.pointerId); } catch (_) {} }
     dragRef.current = { pointerId: null, startX: 0, startY: 0, originX: 0, originY: 0, maxMove: 0 };
-    if (!wasDrag && hasActivatedRef.current) {
-      // Treated as a tap on the mini-player → toggle pause.
-      togglePause();
-    }
+    if (!wasDrag && hasActivatedRef.current) togglePause();
   }, [togglePause]);
 
-  // Main-view click (not in mini): toggle pause on activated video.
+  // Main-view frame click: tap on the video surface between controls
+  // toggles pause. Buttons inside the frame stopPropagation so they
+  // don't bubble here.
   const handleBlockClick = useCallback((e) => {
-    if (isMini) return; // drag handlers already handle this in mini mode
+    if (isMini) return;
     if (!hasActivatedRef.current) return;
     const tag = (e.target.tagName || '').toLowerCase();
     if (tag === 'a' || tag === 'button') return;
+    // Also ignore clicks that originated inside an overlay control.
+    if (e.target && e.target.closest && e.target.closest('.vb__ctrl')) return;
     togglePause();
   }, [isMini, togglePause]);
 
-  // Spacebar pause/resume — only while the hero block is in view and the
-  // user has activated audio. Does not interfere with the rest of the page.
+  // Spacebar pause/resume.
   useEffect(() => {
     if (!inView || !hasActivated) return;
     const onKey = (e) => {
@@ -266,18 +352,7 @@ export default function VideoBlock() {
     return () => window.removeEventListener('keydown', onKey);
   }, [inView, hasActivated, togglePause]);
 
-  // Viewport behaviour for the hero video:
-  //   visible                                     → close mini; resume
-  //                                                 muted autoplay if we
-  //                                                 were still in that
-  //                                                 phase.
-  //   not visible + activated + not dismissed     → open mini; do NOT
-  //                                                 pause. Same iframe
-  //                                                 reparents via CSS.
-  //   not visible + activated + dismissed by X    → keep mini closed;
-  //                                                 leave video paused.
-  //   not visible + not yet activated             → pause quietly (save
-  //                                                 bandwidth).
+  // Viewport behaviour: mini-player on scroll-out (when activated), not a pause.
   useEffect(() => {
     const el = blockRef.current;
     if (!el || typeof IntersectionObserver === 'undefined') return;
@@ -321,6 +396,22 @@ export default function VideoBlock() {
     bottom: 'auto',
   } : undefined;
 
+  // Derive what the Play/Pause pill label should show.
+  const showPlayIcon = !hasActivated || isPaused;
+  const playLabel = !hasActivated ? 'Play' : (isPaused ? 'Play' : 'Pause');
+
+  // Build quality menu list — order known codes first, then any others.
+  const qualityList = (() => {
+    const out = [];
+    const seen = new Set();
+    QUALITY_ORDER.forEach((q) => {
+      if (qualities.includes(q)) { out.push(q); seen.add(q); }
+    });
+    qualities.forEach((q) => { if (!seen.has(q)) out.push(q); });
+    if (!out.includes('auto')) out.push('auto');
+    return out;
+  })();
+
   return (
     <section ref={blockRef} className="vb" aria-label="Intro video">
       <div className="container">
@@ -338,26 +429,87 @@ export default function VideoBlock() {
             <div ref={mountRef} className="vb__mount" />
             <div className="vb__overlay" aria-hidden="true" />
 
-            {!hasActivated && (
-              <button
-                type="button"
-                className="vb__play"
-                onClick={(e) => { e.stopPropagation(); handlePlay(); }}
-                aria-label="Play video with sound"
-              >
-                <PlayIcon />
-              </button>
+            {/* Custom main controls — hidden when the panel is in mini mode. */}
+            {!isMini && (
+              <React.Fragment>
+                <div className="vb__ctrl vb__ctrl-left">
+                  <button
+                    type="button"
+                    className="vb__pill"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={handlePlayPause}
+                    aria-label={showPlayIcon ? 'Play video' : 'Pause video'}
+                  >
+                    <span className="vb__pill-icon">
+                      {showPlayIcon ? <IconPlay /> : <IconPause />}
+                    </span>
+                    <span className="vb__pill-label">{playLabel}</span>
+                  </button>
+                </div>
+
+                <div className="vb__ctrl vb__ctrl-right">
+                  <div className="vb__quality" ref={qualityPanelRef}>
+                    <button
+                      type="button"
+                      className={'vb__icon-btn' + (qualityOpen ? ' vb__icon-btn--on' : '')}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={handleQualityToggle}
+                      aria-haspopup="menu"
+                      aria-expanded={qualityOpen ? 'true' : 'false'}
+                      aria-label="Video quality"
+                      title="Quality"
+                    >
+                      <IconGear />
+                    </button>
+                    {qualityOpen && (
+                      <div className="vb__quality-menu" role="menu">
+                        {qualityList.map((q) => (
+                          <button
+                            key={q}
+                            type="button"
+                            role="menuitem"
+                            className={
+                              'vb__quality-item' +
+                              (q === currentQuality ? ' vb__quality-item--active' : '')
+                            }
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onClick={handleQualityPick(q)}
+                          >
+                            {QUALITY_LABELS[q] || q}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    className={'vb__icon-btn' + (!isMuted ? ' vb__icon-btn--on' : '')}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={handleMute}
+                    aria-label={isMuted ? 'Unmute' : 'Mute'}
+                    title={isMuted ? 'Unmute' : 'Mute'}
+                  >
+                    {isMuted ? <IconMuted /> : <IconVolume />}
+                  </button>
+
+                  <button
+                    type="button"
+                    className={'vb__icon-btn' + (ccOn ? ' vb__icon-btn--on' : '')}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={handleCC}
+                    aria-label={ccOn ? 'Hide captions' : 'Show captions'}
+                    title="Subtitles"
+                  >
+                    <IconCC />
+                  </button>
+                </div>
+              </React.Fragment>
             )}
 
-            {hasActivated && isPaused && !isMini && (
-              <div className="vb__paused" aria-hidden="true">
-                <PlayIcon />
-              </div>
-            )}
-
+            {/* Mini-player chrome — unchanged. */}
             {isMini && (
               <React.Fragment>
-                {/* Visual affordance so the user knows the panel is draggable. */}
                 <div className="vb__mini-grip" aria-hidden="true">
                   <span /><span /><span /><span /><span /><span />
                 </div>
@@ -368,22 +520,17 @@ export default function VideoBlock() {
                   onClick={handleCloseMini}
                   aria-label="Close mini player"
                 >
-                  <CloseIcon />
+                  <IconClose />
                 </button>
                 {hasActivated && isPaused && (
                   <div className="vb__mini-paused" aria-hidden="true">
-                    <PlayIcon />
+                    <IconPlay />
                   </div>
                 )}
               </React.Fragment>
             )}
           </div>
         </div>
-        {hasActivated && !isMini && (
-          <p className="vb__hint" aria-hidden="true">
-            Click the video or press space to pause / resume
-          </p>
-        )}
       </div>
     </section>
   );
