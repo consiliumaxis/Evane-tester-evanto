@@ -259,6 +259,81 @@ main {
   align-items: center;
 }
 
+/* ---- Seek bar -------------------------------------------------------------
+ * Full-width thin progress track above the control row. Click to jump,
+ * drag the handle to scrub. Syncs with YouTube via seekTo / getCurrentTime
+ * / getDuration. Hidden in mini-player mode via .vb__frame--mini .vb__ctrl. */
+
+.vb__ctrl-seek {
+  left: 20px;
+  right: 20px;
+  bottom: 72px;
+}
+
+.vb__seek {
+  position: relative;
+  height: 22px;              /* oversized hit area; track itself is thinner */
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.vb__seek-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 4px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25) inset;
+  pointer-events: none;
+}
+
+.vb__seek-fill {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 4px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--gold) 0%, var(--gold-bright) 100%);
+  box-shadow: 0 0 10px rgba(224, 189, 104, 0.35);
+  pointer-events: none;
+  transition: width 0.08s linear;
+}
+
+.vb__seek-handle {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: var(--gold-bright);
+  transform: translate(-50%, -50%);
+  box-shadow:
+    0 0 0 3px rgba(224, 189, 104, 0.22),
+    0 2px 6px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.vb__seek:hover .vb__seek-handle,
+.vb__seek:focus-visible .vb__seek-handle {
+  transform: translate(-50%, -50%) scale(1.25);
+  box-shadow:
+    0 0 0 4px rgba(224, 189, 104, 0.28),
+    0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.vb__seek:focus-visible {
+  outline: none;
+}
+
 .vb__pill {
   display: inline-flex;
   align-items: center;
@@ -780,6 +855,11 @@ main {
 
   .vb__ctrl-left  { left: 12px; bottom: 12px; }
   .vb__ctrl-right { right: 12px; bottom: 12px; gap: 6px; }
+  .vb__ctrl-seek  { left: 12px; right: 12px; bottom: 66px; }
+  .vb__seek       { height: 26px; }
+  .vb__seek-track,
+  .vb__seek-fill  { height: 3px; }
+  .vb__seek-handle { width: 14px; height: 14px; }
   .vb__pill       { padding: 10px 16px 10px 12px; font-size: 0.72rem; letter-spacing: 0.12em; gap: 8px; }
   .vb__pill-icon  { width: 20px; height: 20px; }
   .vb__pill-icon svg { width: 10px; height: 10px; }

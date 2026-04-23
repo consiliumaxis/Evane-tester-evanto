@@ -73,6 +73,14 @@ export default function VideoBlock() {
   const [currentQuality, setCurrentQuality] = useState('auto');
   const [qualityOpen, setQualityOpen] = useState(false);
 
+  // Seek-bar state: current position and total duration (seconds).
+  const [duration, setDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  // Scrubbing ref — while the user drags the handle we freeze updates
+  // from the player's own clock to avoid snap-back.
+  const isScrubbingRef = useRef(false);
+  const seekRef = useRef(null);
+
   const [inView, setInView] = useState(true);
   const [isMini, setIsMini] = useState(false);
   const [isMiniDismissed, setIsMiniDismissed] = useState(false);
@@ -258,6 +266,71 @@ export default function VideoBlock() {
     return () => document.removeEventListener('pointerdown', onDocDown, true);
   }, [qualityOpen]);
 
+  // --------- Seek bar ---------
+  // Poll the YouTube player for current time + duration every 250 ms and
+  // mirror it into React state so the seek bar re-renders. Freezes while
+  // the user is actively scrubbing.
+  useEffect(() => {
+    if (!isReady) return undefined;
+    const id = setInterval(() => {
+      if (isScrubbingRef.current) return;
+      const p = playerRef.current;
+      if (!p) return;
+      try {
+        if (typeof p.getDuration === 'function') {
+          const d = p.getDuration();
+          if (d && !Number.isNaN(d)) {
+            setDuration((prev) => (Math.abs(prev - d) > 0.01 ? d : prev));
+          }
+        }
+        if (typeof p.getCurrentTime === 'function') {
+          const t = p.getCurrentTime();
+          if (!Number.isNaN(t)) setCurrentTime(t);
+        }
+      } catch (_) {}
+    }, 250);
+    return () => clearInterval(id);
+  }, [isReady]);
+
+  // Convert a pointer clientX into a time and seek the player.
+  const seekFromPointer = useCallback((clientX) => {
+    const el = seekRef.current;
+    if (!el) return;
+    const d = duration || 0;
+    if (!d) return;
+    const rect = el.getBoundingClientRect();
+    const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+    const t = ratio * d;
+    const p = playerRef.current;
+    if (p && typeof p.seekTo === 'function') {
+      try { p.seekTo(t, true); } catch (_) {}
+    }
+    setCurrentTime(t);
+  }, [duration]);
+
+  const handleSeekDown = useCallback((e) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+    const el = seekRef.current;
+    if (el) { try { el.setPointerCapture(e.pointerId); } catch (_) {} }
+    isScrubbingRef.current = true;
+    seekFromPointer(e.clientX);
+  }, [seekFromPointer]);
+
+  const handleSeekMove = useCallback((e) => {
+    if (!isScrubbingRef.current) return;
+    if (e && e.stopPropagation) e.stopPropagation();
+    seekFromPointer(e.clientX);
+  }, [seekFromPointer]);
+
+  const handleSeekUp = useCallback((e) => {
+    if (!isScrubbingRef.current) return;
+    if (e && e.stopPropagation) e.stopPropagation();
+    const el = seekRef.current;
+    if (el) { try { el.releasePointerCapture(e.pointerId); } catch (_) {} }
+    seekFromPointer(e.clientX);
+    isScrubbingRef.current = false;
+  }, [seekFromPointer]);
+
   // --------- Mini-player drag + close ---------
 
   const handleCloseMini = useCallback((e) => {
@@ -432,6 +505,37 @@ export default function VideoBlock() {
             {/* Custom main controls — hidden when the panel is in mini mode. */}
             {!isMini && (
               <React.Fragment>
+                {/* Seek bar: thin full-width progress track with a draggable
+                    handle. Lives in its own .vb__ctrl row so the overlay
+                    pointer-events rules apply and the frame's tap-to-pause
+                    / drag handlers can distinguish it. */}
+                <div className="vb__ctrl vb__ctrl-seek">
+                  <div
+                    ref={seekRef}
+                    className="vb__seek"
+                    onPointerDown={handleSeekDown}
+                    onPointerMove={handleSeekMove}
+                    onPointerUp={handleSeekUp}
+                    onPointerCancel={handleSeekUp}
+                    role="slider"
+                    aria-label="Seek"
+                    aria-valuemin={0}
+                    aria-valuemax={Math.round(duration || 0)}
+                    aria-valuenow={Math.round(currentTime || 0)}
+                    tabIndex={0}
+                  >
+                    <div className="vb__seek-track" />
+                    <div
+                      className="vb__seek-fill"
+                      style={{ width: duration ? `${(currentTime / duration) * 100}%` : '0%' }}
+                    />
+                    <div
+                      className="vb__seek-handle"
+                      style={{ left: duration ? `${(currentTime / duration) * 100}%` : '0%' }}
+                    />
+                  </div>
+                </div>
+
                 <div className="vb__ctrl vb__ctrl-left">
                   <button
                     type="button"
