@@ -4,7 +4,7 @@ import { CTA_INTERNAL_HREF } from '../../lib/seo';
 
 // Portrait lives under /public/images/portrait.jpg. The filename is kept
 // stable so the image can be swapped without touching code.
-const PORTRAIT_SRC = '/images/portrait.jpg';
+const PORTRAIT_SRC = '/images/portrait.webp';
 
 export default function CtaBand() {
   return (
