@@ -463,7 +463,11 @@ main {
 
 .cta-band__content {
   grid-area: content;
-  text-align: left;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .cta-band__portrait {
@@ -497,13 +501,13 @@ main {
   line-height: 1.1;
   letter-spacing: -0.02em;
   color: var(--text);
-  margin: 0 0 28px;
+  margin: 0 auto 28px;
   max-width: 420px;
 }
 
 .cta-band__action {
   display: flex;
-  justify-content: flex-start;
+  justify-content: center;
 }
 
 .cta {
