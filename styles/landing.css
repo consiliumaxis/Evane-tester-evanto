@@ -600,49 +600,13 @@ main {
 }
 
 /* =========================================================================
- * 4. CTA — two-column "content + portrait" band
+ * 4. CTA — single compact centered band
  * ========================================================================= */
 
 .cta-band {
   padding: 48px 0 96px;
-  background: transparent;
-}
-
-.cta-band__grid {
-  display: grid;
-  grid-template-columns: 1.1fr 1fr;
-  grid-template-areas: "content portrait";
-  gap: 72px;
-  align-items: center;
-  max-width: 1040px;
-  margin: 0 auto;
-}
-
-.cta-band__content {
-  grid-area: content;
   text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.cta-band__portrait {
-  grid-area: portrait;
-  justify-self: center;
-  width: 100%;
-  max-width: 360px;
-  aspect-ratio: 3 / 4;
-  /* No background / border / shadow — the portrait is a transparent cut-out
-   * that sits directly on the page gradient. */
-}
-
-.cta-band__portrait-img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: center;
-  display: block;
+  background: transparent;
 }
 
 .cta-band__title {
@@ -652,13 +616,8 @@ main {
   line-height: 1.1;
   letter-spacing: -0.02em;
   color: var(--text);
-  margin: 0 auto 28px;
-  max-width: 420px;
-}
-
-.cta-band__action {
-  display: flex;
-  justify-content: center;
+  margin: 0 auto 32px;
+  max-width: 560px;
 }
 
 .cta {
@@ -872,19 +831,7 @@ main {
   .rl__text    { line-height: 1.65; }
 
   .cta-band    { padding: 36px 0 64px; }
-  .cta-band__grid {
-    grid-template-columns: 1fr;
-    grid-template-areas: "portrait" "content";
-    gap: 28px;
-  }
-  .cta-band__content { text-align: center; }
-  .cta-band__action  { justify-content: center; }
-  .cta-band__title   { margin: 0 auto 20px; max-width: 460px; }
-  .cta-band__portrait {
-    max-width: 240px;
-    aspect-ratio: 3 / 4;
-    border-radius: 14px;
-  }
+  .cta-band__title { margin: 0 auto 20px; max-width: 460px; }
 
   .footer      { padding: 48px 0 32px; }
   .footer__brand-row { gap: 12px; padding-bottom: 20px; }
@@ -905,7 +852,6 @@ main {
   .vb__overlay { border-radius: 12px; }
   .rl       { padding: 28px 0 12px; }
   .cta-band { padding: 24px 0 48px; }
-  .cta-band__portrait { max-width: 200px; border-radius: 12px; }
 }
 
 /* =========================================================================
