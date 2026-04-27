@@ -271,149 +271,110 @@ main {
  *     captions. Visible only when the panel is NOT in mini mode.
  */
 
-/* ---- Bottom control panel (single bar, used in main + mini) -------------- */
+/* ---- Bottom control bar — single floating pill at the bottom of the
+ *      video. Same composition for main view and mini-player. ------------- */
 
 .vb__panel {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
   z-index: 4;
-  padding: 0 18px 12px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 6px 0 8px;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 999px;
   font-family: var(--font);
   user-select: none;
   -webkit-user-select: none;
-}
-
-/* Soft dark gradient that blends the control row into the video. */
-.vb__panel-bg {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 130%;
-  pointer-events: none;
-  background: linear-gradient(
-    to top,
-    rgba(0, 0, 0, 0.7) 0%,
-    rgba(0, 0, 0, 0.4) 45%,
-    rgba(0, 0, 0, 0) 100%
-  );
-}
-
-.vb__panel-row {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding-top: 6px;
-}
-
-.vb__panel-left,
-.vb__panel-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  box-shadow: 0 6px 20px -8px rgba(0, 0, 0, 0.5);
 }
 
 /* Time read-out next to the play button. */
 .vb__time {
   font-family: var(--font);
   font-variant-numeric: tabular-nums;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   font-weight: 500;
-  letter-spacing: 0.04em;
-  color: rgba(245, 242, 234, 0.85);
-  margin-left: 6px;
-}
-.vb__time-sep {
-  color: rgba(245, 242, 234, 0.4);
-  margin: 0 2px;
+  letter-spacing: 0.02em;
+  color: #fff;
+  flex-shrink: 0;
+  padding: 0 4px;
 }
 
-/* Centered Play button shown only before activation. */
-.vb__center-play {
+/* "Click for sound" prompt pill, top-right of the video, shown only while
+ * the muted autoplay is still in effect. Click activates audio + restart. */
+.vb__sound-pill {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 96px;
-  height: 96px;
-  border-radius: 999px;
-  background: rgba(10, 13, 20, 0.55);
-  border: 1.5px solid rgba(224, 189, 104, 0.6);
-  color: var(--gold-bright);
-  display: flex;
+  top: 18px;
+  right: 18px;
+  z-index: 5;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
+  gap: 8px;
+  padding: 9px 14px 9px 18px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-family: var(--font);
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  cursor: pointer;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  box-shadow:
-    0 0 0 1px rgba(0, 0, 0, 0.35),
-    0 22px 60px -20px rgba(224, 189, 104, 0.45),
-    0 0 50px -10px rgba(224, 189, 104, 0.3);
-  cursor: pointer;
-  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
-  z-index: 3;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.5);
 }
 
-.vb__center-play:hover,
-.vb__center-play:focus-visible {
-  background: rgba(201, 164, 76, 0.22);
+.vb__sound-pill:hover,
+.vb__sound-pill:focus-visible {
+  background: rgba(201, 164, 76, 0.32);
   border-color: var(--gold-bright);
-  transform: translate(-50%, -50%) scale(1.04);
   outline: none;
 }
 
-.vb__center-play svg {
-  width: 28px;
-  height: 28px;
-  transform: translateX(2px);
+.vb__sound-pill svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
 }
 
-/* Generic icon button used for play/pause/mute/CC/quality/fullscreen
- * inside the bottom panel. Borderless, transparent — the panel-bg behind
- * gives the visual weight, like the reference player. */
+/* Generic icon button — transparent, hover lifts to white-tint. */
 .vb__btn {
   appearance: none;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 999px;
   border: 0;
   background: transparent;
-  color: rgba(245, 242, 234, 0.92);
+  color: #fff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: color 0.15s ease, background 0.15s ease, transform 0.12s ease;
+  transition: color 0.15s ease, background 0.15s ease;
   flex-shrink: 0;
 }
 
 .vb__btn:hover,
 .vb__btn:focus-visible {
   color: var(--gold-bright);
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.1);
   outline: none;
 }
 
-.vb__btn--on {
-  color: var(--gold-bright);
-}
-
-.vb__btn--play {
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.vb__btn--play:hover,
-.vb__btn--play:focus-visible {
-  background: rgba(201, 164, 76, 0.22);
-}
+.vb__btn--on { color: var(--gold-bright); }
 
 .vb__btn svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   display: block;
   overflow: visible;
 }
@@ -424,14 +385,16 @@ main {
 
 .vb__seek {
   position: relative;
-  height: 18px;        /* generous hit area; visible track is thinner */
+  flex: 1;
+  min-width: 0;        /* allow it to shrink past intrinsic content */
+  height: 22px;        /* generous hit area; visible track is thinner */
   display: flex;
   align-items: center;
   cursor: pointer;
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
-  margin: 0 -2px 2px;
+  margin: 0 6px;
 }
 
 .vb__seek-track {
@@ -440,10 +403,9 @@ main {
   right: 0;
   top: 50%;
   transform: translateY(-50%);
-  height: 3px;
-  border-radius: 3px;
-  background: rgba(255, 255, 255, 0.22);
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25) inset;
+  height: 4px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.25);
   pointer-events: none;
 }
 
@@ -452,10 +414,10 @@ main {
   left: 0;
   top: 50%;
   transform: translateY(-50%);
-  height: 3px;
-  border-radius: 3px;
+  height: 4px;
+  border-radius: 4px;
   background: linear-gradient(90deg, var(--gold) 0%, var(--gold-bright) 100%);
-  box-shadow: 0 0 8px rgba(224, 189, 104, 0.35);
+  box-shadow: 0 0 8px rgba(224, 189, 104, 0.4);
   pointer-events: none;
   transition: width 0.08s linear;
 }
@@ -463,23 +425,21 @@ main {
 .vb__seek-handle {
   position: absolute;
   top: 50%;
-  width: 11px;
-  height: 11px;
+  width: 12px;
+  height: 12px;
   border-radius: 999px;
   background: var(--gold-bright);
-  transform: translate(-50%, -50%) scale(0.85);
+  transform: translate(-50%, -50%);
   box-shadow:
-    0 0 0 3px rgba(224, 189, 104, 0.2),
+    0 0 0 3px rgba(224, 189, 104, 0.22),
     0 2px 5px rgba(0, 0, 0, 0.45);
   pointer-events: none;
   transition: transform 0.15s ease;
-  opacity: 0.85;
 }
 
 .vb__seek:hover .vb__seek-handle,
 .vb__seek:focus-visible .vb__seek-handle {
-  transform: translate(-50%, -50%) scale(1.15);
-  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.18);
 }
 
 .vb__seek:focus-visible {
@@ -539,17 +499,21 @@ main {
   to   { opacity: 1; }
 }
 
-/* ---- Mini-player variant of the same panel ------------------------------ */
+/* ---- Mini-player variant — same pill, compact ---------------------------- */
 .vb__panel--mini {
-  padding: 0 10px 8px;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  height: 32px;
+  gap: 4px;
+  padding: 0 4px;
 }
-.vb__panel--mini .vb__panel-row { padding-top: 4px; gap: 6px; }
-.vb__panel--mini .vb__btn       { width: 30px; height: 30px; }
-.vb__panel--mini .vb__btn svg   { width: 14px; height: 14px; }
-.vb__panel--mini .vb__time      { font-size: 0.7rem; margin-left: 2px; }
-.vb__panel--mini .vb__seek      { height: 14px; margin: 0 -1px 1px; }
+.vb__panel--mini .vb__btn         { width: 26px; height: 26px; }
+.vb__panel--mini .vb__btn svg     { width: 13px; height: 13px; }
+.vb__panel--mini .vb__time        { font-size: 0.7rem; padding: 0 2px; }
+.vb__panel--mini .vb__seek        { height: 16px; margin: 0 4px; }
 .vb__panel--mini .vb__seek-track,
-.vb__panel--mini .vb__seek-fill { height: 2px; }
+.vb__panel--mini .vb__seek-fill   { height: 2px; }
 .vb__panel--mini .vb__seek-handle { width: 9px; height: 9px; }
 
 /* ---- Mini-player chrome ---------------------------------------------------
@@ -899,19 +863,16 @@ main {
   .vb__mini-paused { width: 36px; height: 36px; }
   .vb__mini-paused svg { width: 14px; height: 14px; }
 
-  .vb__panel       { padding: 0 12px 10px; }
-  .vb__panel-row   { padding-top: 4px; gap: 6px; }
-  .vb__panel-left,
-  .vb__panel-right { gap: 4px; }
-  .vb__btn         { width: 38px; height: 38px; }
-  .vb__btn svg     { width: 18px; height: 18px; }
-  .vb__time        { font-size: 0.74rem; margin-left: 4px; }
-  .vb__seek        { height: 22px; margin: 0 -2px 2px; }
+  .vb__panel       { left: 10px; right: 10px; bottom: 10px; height: 40px; gap: 6px; padding: 0 4px; }
+  .vb__btn         { width: 32px; height: 32px; }
+  .vb__btn svg     { width: 16px; height: 16px; }
+  .vb__time        { font-size: 0.78rem; padding: 0 2px; }
+  .vb__seek        { height: 22px; margin: 0 4px; }
   .vb__seek-track,
   .vb__seek-fill   { height: 3px; }
-  .vb__seek-handle { width: 13px; height: 13px; }
-  .vb__center-play { width: 76px; height: 76px; }
-  .vb__center-play svg { width: 24px; height: 24px; }
+  .vb__seek-handle { width: 11px; height: 11px; }
+  .vb__sound-pill  { top: 12px; right: 12px; padding: 8px 12px 8px 14px; font-size: 0.78rem; }
+  .vb__sound-pill svg { width: 16px; height: 16px; }
 
   .rl          { padding: 40px 0 20px; }
   .rl__text    { line-height: 1.65; }

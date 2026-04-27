@@ -436,12 +436,16 @@ export default function VideoBlock() {
 
   const handleBlockClick = useCallback((e) => {
     if (isMini) return;
-    if (!hasActivatedRef.current) return;
     const tag = (e.target.tagName || '').toLowerCase();
     if (tag === 'a' || tag === 'button') return;
-    if (e.target && e.target.closest && e.target.closest('.vb__ctrl')) return;
-    togglePause();
-  }, [isMini, togglePause]);
+    if (e.target && e.target.closest &&
+        e.target.closest('.vb__panel, .vb__sound-pill, .vb__mini-close, .vb__mini-grip'))
+      return;
+    // First tap on the video starts playback with sound (same activation
+    // path as the "Click for sound" pill); subsequent taps toggle pause.
+    if (!hasActivatedRef.current) handlePlay();
+    else togglePause();
+  }, [isMini, togglePause, handlePlay]);
 
   // Spacebar pause/resume, scoped to hero in viewport + activated.
   useEffect(() => {
@@ -539,16 +543,18 @@ export default function VideoBlock() {
             <div ref={mountRef} className={wistiaMountClass} />
             <div className="vb__overlay" aria-hidden="true" />
 
-            {/* Big centered Play before activation. */}
+            {/* "Click for sound" prompt, top-right, while still in
+                muted-autoplay phase. Click activates sound + restart. */}
             {!hasActivated && !isMini && (
               <button
                 type="button"
-                className="vb__center-play"
+                className="vb__sound-pill"
                 onPointerDown={(e) => e.stopPropagation()}
-                onClick={handlePlayPause}
-                aria-label="Play video"
+                onClick={handlePlay}
+                aria-label="Click for sound"
               >
-                <IconPlay />
+                <span>Click for sound</span>
+                <IconVolume />
               </button>
             )}
 
@@ -575,15 +581,26 @@ export default function VideoBlock() {
               </React.Fragment>
             )}
 
-            {/* Unified bottom control panel — same composition for main view
-                and mini-player. Mounts after the user has triggered Play. */}
+            {/* Inline bottom control bar: play | time | seek | mute | gear | full.
+                Used for main view and (compacted) for the mini-player. */}
             {hasActivated && (
               <div
                 className={'vb__panel' + (isMini ? ' vb__panel--mini' : '')}
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="vb__panel-bg" aria-hidden="true" />
+                <button
+                  type="button"
+                  className="vb__btn vb__btn--play"
+                  onClick={handlePlayPause}
+                  aria-label={showPlayIcon ? 'Play video' : 'Pause video'}
+                >
+                  {showPlayIcon ? <IconPlay /> : <IconPause />}
+                </button>
+
+                <span className="vb__time" aria-live="off">
+                  {fmtTime(currentTime)}
+                </span>
 
                 <div
                   ref={seekRef}
@@ -610,91 +627,61 @@ export default function VideoBlock() {
                   />
                 </div>
 
-                <div className="vb__panel-row">
-                  <div className="vb__panel-left">
+                <button
+                  type="button"
+                  className={'vb__btn' + (!isMuted ? ' vb__btn--on' : '')}
+                  onClick={handleMute}
+                  aria-label={isMuted ? 'Unmute' : 'Mute'}
+                  title={isMuted ? 'Unmute' : 'Mute'}
+                >
+                  {isMuted ? <IconMuted /> : <IconVolume />}
+                </button>
+
+                {!isMini && (
+                  <div className="vb__quality" ref={qualityPanelRef}>
                     <button
                       type="button"
-                      className="vb__btn vb__btn--play"
-                      onClick={handlePlayPause}
-                      aria-label={showPlayIcon ? 'Play video' : 'Pause video'}
+                      className={'vb__btn' + (qualityOpen ? ' vb__btn--on' : '')}
+                      onClick={handleQualityToggle}
+                      aria-haspopup="menu"
+                      aria-expanded={qualityOpen ? 'true' : 'false'}
+                      aria-label="Video quality"
+                      title="Quality"
                     >
-                      {showPlayIcon ? <IconPlay /> : <IconPause />}
+                      <IconGear />
                     </button>
-                    <span className="vb__time" aria-live="off">
-                      {fmtTime(currentTime)} <span className="vb__time-sep">/</span> {fmtTime(duration)}
-                    </span>
-                  </div>
-
-                  <div className="vb__panel-right">
-                    <button
-                      type="button"
-                      className={'vb__btn' + (!isMuted ? ' vb__btn--on' : '')}
-                      onClick={handleMute}
-                      aria-label={isMuted ? 'Unmute' : 'Mute'}
-                      title={isMuted ? 'Unmute' : 'Mute'}
-                    >
-                      {isMuted ? <IconMuted /> : <IconVolume />}
-                    </button>
-
-                    {!isMini && (
-                      <button
-                        type="button"
-                        className={'vb__btn' + (ccOn ? ' vb__btn--on' : '')}
-                        onClick={handleCC}
-                        aria-label={ccOn ? 'Hide captions' : 'Show captions'}
-                        title="Subtitles"
-                      >
-                        <IconCC />
-                      </button>
-                    )}
-
-                    {!isMini && (
-                      <div className="vb__quality" ref={qualityPanelRef}>
-                        <button
-                          type="button"
-                          className={'vb__btn' + (qualityOpen ? ' vb__btn--on' : '')}
-                          onClick={handleQualityToggle}
-                          aria-haspopup="menu"
-                          aria-expanded={qualityOpen ? 'true' : 'false'}
-                          aria-label="Video quality"
-                          title="Quality"
-                        >
-                          <IconGear />
-                        </button>
-                        {qualityOpen && (
-                          <div className="vb__quality-menu" role="menu">
-                            {qualityList.map((q) => (
-                              <button
-                                key={q}
-                                type="button"
-                                role="menuitem"
-                                className={
-                                  'vb__quality-item' +
-                                  (q === currentQuality ? ' vb__quality-item--active' : '')
-                                }
-                                onClick={handleQualityPick(q)}
-                              >
-                                {QUALITY_LABELS[q] || q}
-                              </button>
-                            ))}
-                          </div>
-                        )}
+                    {qualityOpen && (
+                      <div className="vb__quality-menu" role="menu">
+                        {qualityList.map((q) => (
+                          <button
+                            key={q}
+                            type="button"
+                            role="menuitem"
+                            className={
+                              'vb__quality-item' +
+                              (q === currentQuality ? ' vb__quality-item--active' : '')
+                            }
+                            onClick={handleQualityPick(q)}
+                          >
+                            {QUALITY_LABELS[q] || q}
+                          </button>
+                        ))}
                       </div>
                     )}
-
-                    {!isMini && (
-                      <button
-                        type="button"
-                        className="vb__btn"
-                        onClick={handleFullscreen}
-                        aria-label="Fullscreen"
-                        title="Fullscreen"
-                      >
-                        <IconExpand />
-                      </button>
-                    )}
                   </div>
-                </div>
+                )}
+
+                {!isMini && (
+                  <button
+                    type="button"
+                    className="vb__btn"
+                    onClick={handleFullscreen}
+                    aria-label="Fullscreen"
+                    title="Fullscreen"
+                  >
+                    <IconExpand />
+                  </button>
+                )}
               </div>
             )}
           </div>
