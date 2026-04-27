@@ -70,6 +70,22 @@ function IconGear() {
   );
 }
 
+function IconExpand() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 9V3h6M21 9V3h-6M3 15v6h6M21 15v6h-6" />
+    </svg>
+  );
+}
+
+function fmtTime(t) {
+  if (!t || !isFinite(t) || t < 0) return '0:00';
+  const total = Math.floor(t);
+  const m = Math.floor(total / 60);
+  const s = (total % 60).toString().padStart(2, '0');
+  return `${m}:${s}`;
+}
+
 // Load Wistia E-v1.js + the per-video JSONP, then resolve with a video
 // handle once the player is ready.
 function loadWistiaPlayer(videoId) {
@@ -341,6 +357,20 @@ export default function VideoBlock() {
 
   // --------- Mini-player drag + close ---------
 
+  const handleFullscreen = useCallback((e) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+    const v = playerRef.current;
+    // Prefer Wistia's own fullscreen so the video is what enters
+    // fullscreen (not our wrapper); fall back to the DOM API.
+    if (v && typeof v.requestFullscreen === 'function') {
+      try { v.requestFullscreen(); return; } catch (_) {}
+    }
+    const f = frameRef.current;
+    if (f && typeof f.requestFullscreen === 'function') {
+      try { f.requestFullscreen(); } catch (_) {}
+    }
+  }, []);
+
   const handleCloseMini = useCallback((e) => {
     if (e && e.stopPropagation) e.stopPropagation();
     const v = playerRef.current;
@@ -509,112 +539,20 @@ export default function VideoBlock() {
             <div ref={mountRef} className={wistiaMountClass} />
             <div className="vb__overlay" aria-hidden="true" />
 
-            {!isMini && (
-              <React.Fragment>
-                {hasActivated && (
-                  <div className="vb__ctrl vb__ctrl-seek">
-                    <div
-                      ref={seekRef}
-                      className="vb__seek"
-                      onPointerDown={handleSeekDown}
-                      onPointerMove={handleSeekMove}
-                      onPointerUp={handleSeekUp}
-                      onPointerCancel={handleSeekUp}
-                      role="slider"
-                      aria-label="Seek"
-                      aria-valuemin={0}
-                      aria-valuemax={Math.round(duration || 0)}
-                      aria-valuenow={Math.round(currentTime || 0)}
-                      tabIndex={0}
-                    >
-                      <div className="vb__seek-track" />
-                      <div
-                        className="vb__seek-fill"
-                        style={{ width: duration ? `${(currentTime / duration) * 100}%` : '0%' }}
-                      />
-                      <div
-                        className="vb__seek-handle"
-                        style={{ left: duration ? `${(currentTime / duration) * 100}%` : '0%' }}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                <div className="vb__ctrl vb__ctrl-left">
-                  <button
-                    type="button"
-                    className="vb__pill"
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onClick={handlePlayPause}
-                    aria-label={showPlayIcon ? 'Play video' : 'Pause video'}
-                  >
-                    <span className="vb__pill-icon">
-                      {showPlayIcon ? <IconPlay /> : <IconPause />}
-                    </span>
-                    <span className="vb__pill-label">{playLabel}</span>
-                  </button>
-                </div>
-
-                <div className="vb__ctrl vb__ctrl-right">
-                  <div className="vb__quality" ref={qualityPanelRef}>
-                    <button
-                      type="button"
-                      className={'vb__icon-btn' + (qualityOpen ? ' vb__icon-btn--on' : '')}
-                      onPointerDown={(e) => e.stopPropagation()}
-                      onClick={handleQualityToggle}
-                      aria-haspopup="menu"
-                      aria-expanded={qualityOpen ? 'true' : 'false'}
-                      aria-label="Video quality"
-                      title="Quality"
-                    >
-                      <IconGear />
-                    </button>
-                    {qualityOpen && (
-                      <div className="vb__quality-menu" role="menu">
-                        {qualityList.map((q) => (
-                          <button
-                            key={q}
-                            type="button"
-                            role="menuitem"
-                            className={
-                              'vb__quality-item' +
-                              (q === currentQuality ? ' vb__quality-item--active' : '')
-                            }
-                            onPointerDown={(e) => e.stopPropagation()}
-                            onClick={handleQualityPick(q)}
-                          >
-                            {QUALITY_LABELS[q] || q}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <button
-                    type="button"
-                    className={'vb__icon-btn' + (!isMuted ? ' vb__icon-btn--on' : '')}
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onClick={handleMute}
-                    aria-label={isMuted ? 'Unmute' : 'Mute'}
-                    title={isMuted ? 'Unmute' : 'Mute'}
-                  >
-                    {isMuted ? <IconMuted /> : <IconVolume />}
-                  </button>
-
-                  <button
-                    type="button"
-                    className={'vb__icon-btn' + (ccOn ? ' vb__icon-btn--on' : '')}
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onClick={handleCC}
-                    aria-label={ccOn ? 'Hide captions' : 'Show captions'}
-                    title="Subtitles"
-                  >
-                    <IconCC />
-                  </button>
-                </div>
-              </React.Fragment>
+            {/* Big centered Play before activation. */}
+            {!hasActivated && !isMini && (
+              <button
+                type="button"
+                className="vb__center-play"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={handlePlayPause}
+                aria-label="Play video"
+              >
+                <IconPlay />
+              </button>
             )}
 
+            {/* Mini-only chrome: drag grip, close button, paused overlay. */}
             {isMini && (
               <React.Fragment>
                 <div className="vb__mini-grip" aria-hidden="true">
@@ -635,6 +573,129 @@ export default function VideoBlock() {
                   </div>
                 )}
               </React.Fragment>
+            )}
+
+            {/* Unified bottom control panel — same composition for main view
+                and mini-player. Mounts after the user has triggered Play. */}
+            {hasActivated && (
+              <div
+                className={'vb__panel' + (isMini ? ' vb__panel--mini' : '')}
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="vb__panel-bg" aria-hidden="true" />
+
+                <div
+                  ref={seekRef}
+                  className="vb__seek"
+                  onPointerDown={handleSeekDown}
+                  onPointerMove={handleSeekMove}
+                  onPointerUp={handleSeekUp}
+                  onPointerCancel={handleSeekUp}
+                  role="slider"
+                  aria-label="Seek"
+                  aria-valuemin={0}
+                  aria-valuemax={Math.round(duration || 0)}
+                  aria-valuenow={Math.round(currentTime || 0)}
+                  tabIndex={0}
+                >
+                  <div className="vb__seek-track" />
+                  <div
+                    className="vb__seek-fill"
+                    style={{ width: duration ? `${(currentTime / duration) * 100}%` : '0%' }}
+                  />
+                  <div
+                    className="vb__seek-handle"
+                    style={{ left: duration ? `${(currentTime / duration) * 100}%` : '0%' }}
+                  />
+                </div>
+
+                <div className="vb__panel-row">
+                  <div className="vb__panel-left">
+                    <button
+                      type="button"
+                      className="vb__btn vb__btn--play"
+                      onClick={handlePlayPause}
+                      aria-label={showPlayIcon ? 'Play video' : 'Pause video'}
+                    >
+                      {showPlayIcon ? <IconPlay /> : <IconPause />}
+                    </button>
+                    <span className="vb__time" aria-live="off">
+                      {fmtTime(currentTime)} <span className="vb__time-sep">/</span> {fmtTime(duration)}
+                    </span>
+                  </div>
+
+                  <div className="vb__panel-right">
+                    <button
+                      type="button"
+                      className={'vb__btn' + (!isMuted ? ' vb__btn--on' : '')}
+                      onClick={handleMute}
+                      aria-label={isMuted ? 'Unmute' : 'Mute'}
+                      title={isMuted ? 'Unmute' : 'Mute'}
+                    >
+                      {isMuted ? <IconMuted /> : <IconVolume />}
+                    </button>
+
+                    {!isMini && (
+                      <button
+                        type="button"
+                        className={'vb__btn' + (ccOn ? ' vb__btn--on' : '')}
+                        onClick={handleCC}
+                        aria-label={ccOn ? 'Hide captions' : 'Show captions'}
+                        title="Subtitles"
+                      >
+                        <IconCC />
+                      </button>
+                    )}
+
+                    {!isMini && (
+                      <div className="vb__quality" ref={qualityPanelRef}>
+                        <button
+                          type="button"
+                          className={'vb__btn' + (qualityOpen ? ' vb__btn--on' : '')}
+                          onClick={handleQualityToggle}
+                          aria-haspopup="menu"
+                          aria-expanded={qualityOpen ? 'true' : 'false'}
+                          aria-label="Video quality"
+                          title="Quality"
+                        >
+                          <IconGear />
+                        </button>
+                        {qualityOpen && (
+                          <div className="vb__quality-menu" role="menu">
+                            {qualityList.map((q) => (
+                              <button
+                                key={q}
+                                type="button"
+                                role="menuitem"
+                                className={
+                                  'vb__quality-item' +
+                                  (q === currentQuality ? ' vb__quality-item--active' : '')
+                                }
+                                onClick={handleQualityPick(q)}
+                              >
+                                {QUALITY_LABELS[q] || q}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {!isMini && (
+                      <button
+                        type="button"
+                        className="vb__btn"
+                        onClick={handleFullscreen}
+                        aria-label="Fullscreen"
+                        title="Fullscreen"
+                      >
+                        <IconExpand />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         </div>

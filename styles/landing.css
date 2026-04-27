@@ -98,9 +98,26 @@ main {
   pointer-events: none;
   user-select: none;
   -webkit-user-select: none;
-  opacity: 0.85;
-  -webkit-mask-image: radial-gradient(ellipse 90% 110% at 100% 65%, #000 0%, rgba(0,0,0,0.55) 45%, transparent 80%);
-          mask-image: radial-gradient(ellipse 90% 110% at 100% 65%, #000 0%, rgba(0,0,0,0.55) 45%, transparent 80%);
+  opacity: 0.7;
+  /* Vertical fade only — chart now spans the full hero width, slightly
+   * stronger toward the bottom and fading to transparent under the
+   * headline so the title stays clean. */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 4%,
+    rgba(0, 0, 0, 0.35) 28%,
+    rgba(0, 0, 0, 0.7) 50%,
+    #000 70%,
+    #000 100%
+  );
+          mask-image: linear-gradient(
+    to bottom,
+    transparent 4%,
+    rgba(0, 0, 0, 0.35) 28%,
+    rgba(0, 0, 0, 0.7) 50%,
+    #000 70%,
+    #000 100%
+  );
 }
 
 .hd__title {
@@ -254,53 +271,167 @@ main {
  *     captions. Visible only when the panel is NOT in mini mode.
  */
 
-.vb__ctrl {
+/* ---- Bottom control panel (single bar, used in main + mini) -------------- */
+
+.vb__panel {
   position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 4;
+  padding: 0 18px 12px;
+  font-family: var(--font);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Soft dark gradient that blends the control row into the video. */
+.vb__panel-bg {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 130%;
   pointer-events: none;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.7) 0%,
+    rgba(0, 0, 0, 0.4) 45%,
+    rgba(0, 0, 0, 0) 100%
+  );
 }
 
-.vb__ctrl > * {
-  pointer-events: auto;
-}
-
-/* In the mini-player we fall back to the simpler grip + close + center
- * paused-indicator chrome; none of the main overlay controls render. */
-.vb__frame--mini .vb__ctrl { display: none; }
-
-.vb__ctrl-left {
-  left: 20px;
-  bottom: 18px;
-}
-
-.vb__ctrl-right {
-  right: 20px;
-  bottom: 18px;
+.vb__panel-row {
+  position: relative;
   display: flex;
-  gap: 8px;
   align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 6px;
 }
 
-/* ---- Seek bar -------------------------------------------------------------
- * Full-width thin progress track above the control row. Click to jump,
- * drag the handle to scrub. Syncs with YouTube via seekTo / getCurrentTime
- * / getDuration. Hidden in mini-player mode via .vb__frame--mini .vb__ctrl. */
-
-.vb__ctrl-seek {
-  left: 20px;
-  right: 20px;
-  bottom: 72px;
+.vb__panel-left,
+.vb__panel-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
+
+/* Time read-out next to the play button. */
+.vb__time {
+  font-family: var(--font);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: rgba(245, 242, 234, 0.85);
+  margin-left: 6px;
+}
+.vb__time-sep {
+  color: rgba(245, 242, 234, 0.4);
+  margin: 0 2px;
+}
+
+/* Centered Play button shown only before activation. */
+.vb__center-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 96px;
+  height: 96px;
+  border-radius: 999px;
+  background: rgba(10, 13, 20, 0.55);
+  border: 1.5px solid rgba(224, 189, 104, 0.6);
+  color: var(--gold-bright);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 22px 60px -20px rgba(224, 189, 104, 0.45),
+    0 0 50px -10px rgba(224, 189, 104, 0.3);
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+  z-index: 3;
+}
+
+.vb__center-play:hover,
+.vb__center-play:focus-visible {
+  background: rgba(201, 164, 76, 0.22);
+  border-color: var(--gold-bright);
+  transform: translate(-50%, -50%) scale(1.04);
+  outline: none;
+}
+
+.vb__center-play svg {
+  width: 28px;
+  height: 28px;
+  transform: translateX(2px);
+}
+
+/* Generic icon button used for play/pause/mute/CC/quality/fullscreen
+ * inside the bottom panel. Borderless, transparent — the panel-bg behind
+ * gives the visual weight, like the reference player. */
+.vb__btn {
+  appearance: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 0;
+  background: transparent;
+  color: rgba(245, 242, 234, 0.92);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease, transform 0.12s ease;
+  flex-shrink: 0;
+}
+
+.vb__btn:hover,
+.vb__btn:focus-visible {
+  color: var(--gold-bright);
+  background: rgba(255, 255, 255, 0.08);
+  outline: none;
+}
+
+.vb__btn--on {
+  color: var(--gold-bright);
+}
+
+.vb__btn--play {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.vb__btn--play:hover,
+.vb__btn--play:focus-visible {
+  background: rgba(201, 164, 76, 0.22);
+}
+
+.vb__btn svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+  overflow: visible;
+}
+
+/* ---- Seek bar -----------------------------------------------------------
+ * Full width of the bottom panel, sits at the top of the panel above the
+ * controls row. Click to jump, drag to scrub. */
 
 .vb__seek {
   position: relative;
-  height: 22px;              /* oversized hit area; track itself is thinner */
+  height: 18px;        /* generous hit area; visible track is thinner */
   display: flex;
   align-items: center;
   cursor: pointer;
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
+  margin: 0 -2px 2px;
 }
 
 .vb__seek-track {
@@ -309,9 +440,9 @@ main {
   right: 0;
   top: 50%;
   transform: translateY(-50%);
-  height: 4px;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.18);
+  height: 3px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.22);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25) inset;
   pointer-events: none;
 }
@@ -321,10 +452,10 @@ main {
   left: 0;
   top: 50%;
   transform: translateY(-50%);
-  height: 4px;
-  border-radius: 4px;
+  height: 3px;
+  border-radius: 3px;
   background: linear-gradient(90deg, var(--gold) 0%, var(--gold-bright) 100%);
-  box-shadow: 0 0 10px rgba(224, 189, 104, 0.35);
+  box-shadow: 0 0 8px rgba(224, 189, 104, 0.35);
   pointer-events: none;
   transition: width 0.08s linear;
 }
@@ -332,137 +463,44 @@ main {
 .vb__seek-handle {
   position: absolute;
   top: 50%;
-  width: 12px;
-  height: 12px;
+  width: 11px;
+  height: 11px;
   border-radius: 999px;
   background: var(--gold-bright);
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) scale(0.85);
   box-shadow:
-    0 0 0 3px rgba(224, 189, 104, 0.22),
-    0 2px 6px rgba(0, 0, 0, 0.45);
+    0 0 0 3px rgba(224, 189, 104, 0.2),
+    0 2px 5px rgba(0, 0, 0, 0.45);
   pointer-events: none;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  transition: transform 0.15s ease;
+  opacity: 0.85;
 }
 
 .vb__seek:hover .vb__seek-handle,
 .vb__seek:focus-visible .vb__seek-handle {
-  transform: translate(-50%, -50%) scale(1.25);
-  box-shadow:
-    0 0 0 4px rgba(224, 189, 104, 0.28),
-    0 2px 8px rgba(0, 0, 0, 0.5);
+  transform: translate(-50%, -50%) scale(1.15);
+  opacity: 1;
 }
 
 .vb__seek:focus-visible {
   outline: none;
 }
 
-.vb__pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 22px 12px 18px;
-  border-radius: 999px;
-  font-family: var(--font);
-  font-weight: 600;
-  font-size: 0.85rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text);
-  background: rgba(10, 13, 20, 0.72);
-  border: 1px solid rgba(224, 189, 104, 0.4);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  box-shadow:
-    0 8px 28px -10px rgba(0, 0, 0, 0.7),
-    0 0 0 1px rgba(0, 0, 0, 0.35);
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease, color 0.2s ease;
-  cursor: pointer;
-}
-
-.vb__pill:hover,
-.vb__pill:focus-visible {
-  background: rgba(201, 164, 76, 0.22);
-  border-color: var(--gold-bright);
-  color: var(--gold-bright);
-  transform: translateY(-1px);
-  outline: none;
-}
-
-.vb__pill-icon {
-  width: 22px;
-  height: 22px;
-  border-radius: 999px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--gold);
-  color: #0a0d14;
-  flex-shrink: 0;
-}
-
-.vb__pill:hover .vb__pill-icon,
-.vb__pill:focus-visible .vb__pill-icon {
-  background: var(--gold-bright);
-}
-
-.vb__pill-icon svg {
-  width: 12px;
-  height: 12px;
-}
-
-.vb__icon-btn {
-  width: 38px;
-  height: 38px;
-  border-radius: 999px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(10, 13, 20, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: rgba(245, 242, 234, 0.88);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  box-shadow:
-    0 6px 20px -8px rgba(0, 0, 0, 0.6),
-    0 0 0 1px rgba(0, 0, 0, 0.3);
-  cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-}
-
-.vb__icon-btn:hover,
-.vb__icon-btn:focus-visible {
-  border-color: var(--border-gold);
-  color: var(--gold-bright);
-  outline: none;
-}
-
-.vb__icon-btn--on {
-  border-color: var(--gold);
-  color: var(--gold-bright);
-  background: rgba(201, 164, 76, 0.18);
-}
-
-.vb__icon-btn svg {
-  width: 18px;
-  height: 18px;
-  display: block;
-  overflow: visible;
-}
-
-.vb__quality { position: relative; }
+/* Quality dropdown that opens upward from the gear icon. */
+.vb__quality { position: relative; display: inline-flex; }
 
 .vb__quality-menu {
   position: absolute;
   right: 0;
-  bottom: calc(100% + 8px);
+  bottom: calc(100% + 6px);
   min-width: 120px;
   padding: 6px;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  background: rgba(10, 13, 20, 0.92);
+  background: rgba(10, 13, 20, 0.94);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
+  border-radius: 10px;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   box-shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.85);
@@ -500,6 +538,19 @@ main {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
+
+/* ---- Mini-player variant of the same panel ------------------------------ */
+.vb__panel--mini {
+  padding: 0 10px 8px;
+}
+.vb__panel--mini .vb__panel-row { padding-top: 4px; gap: 6px; }
+.vb__panel--mini .vb__btn       { width: 30px; height: 30px; }
+.vb__panel--mini .vb__btn svg   { width: 14px; height: 14px; }
+.vb__panel--mini .vb__time      { font-size: 0.7rem; margin-left: 2px; }
+.vb__panel--mini .vb__seek      { height: 14px; margin: 0 -1px 1px; }
+.vb__panel--mini .vb__seek-track,
+.vb__panel--mini .vb__seek-fill { height: 2px; }
+.vb__panel--mini .vb__seek-handle { width: 9px; height: 9px; }
 
 /* ---- Mini-player chrome ---------------------------------------------------
  * Close button in the top-right corner, drag-grip affordance in the top-left,
@@ -824,9 +875,9 @@ main {
 @media (max-width: 720px) {
   .hd          { padding: 64px 0 24px; }
   .hd-chart    {
-    opacity: 0.45;
-    -webkit-mask-image: radial-gradient(ellipse 100% 110% at 90% 70%, #000 0%, rgba(0,0,0,0.5) 40%, transparent 80%);
-            mask-image: radial-gradient(ellipse 100% 110% at 90% 70%, #000 0%, rgba(0,0,0,0.5) 40%, transparent 80%);
+    opacity: 0.4;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 6%, rgba(0,0,0,0.4) 35%, #000 70%, #000 100%);
+            mask-image: linear-gradient(to bottom, transparent 6%, rgba(0,0,0,0.4) 35%, #000 70%, #000 100%);
   }
   .eyebrow     { margin-bottom: 20px; }
   .hd__title   { font-size: clamp(2rem, 8.5vw, 2.6rem); letter-spacing: -0.02em; }
@@ -848,18 +899,19 @@ main {
   .vb__mini-paused { width: 36px; height: 36px; }
   .vb__mini-paused svg { width: 14px; height: 14px; }
 
-  .vb__ctrl-left  { left: 12px; bottom: 12px; }
-  .vb__ctrl-right { right: 12px; bottom: 12px; gap: 6px; }
-  .vb__ctrl-seek  { left: 12px; right: 12px; bottom: 66px; }
-  .vb__seek       { height: 26px; }
+  .vb__panel       { padding: 0 12px 10px; }
+  .vb__panel-row   { padding-top: 4px; gap: 6px; }
+  .vb__panel-left,
+  .vb__panel-right { gap: 4px; }
+  .vb__btn         { width: 38px; height: 38px; }
+  .vb__btn svg     { width: 18px; height: 18px; }
+  .vb__time        { font-size: 0.74rem; margin-left: 4px; }
+  .vb__seek        { height: 22px; margin: 0 -2px 2px; }
   .vb__seek-track,
-  .vb__seek-fill  { height: 3px; }
-  .vb__seek-handle { width: 14px; height: 14px; }
-  .vb__pill       { padding: 10px 16px 10px 12px; font-size: 0.72rem; letter-spacing: 0.12em; gap: 8px; }
-  .vb__pill-icon  { width: 20px; height: 20px; }
-  .vb__pill-icon svg { width: 10px; height: 10px; }
-  .vb__icon-btn   { width: 40px; height: 40px; }
-  .vb__icon-btn svg { width: 18px; height: 18px; }
+  .vb__seek-fill   { height: 3px; }
+  .vb__seek-handle { width: 13px; height: 13px; }
+  .vb__center-play { width: 76px; height: 76px; }
+  .vb__center-play svg { width: 24px; height: 24px; }
 
   .rl          { padding: 40px 0 20px; }
   .rl__text    { line-height: 1.65; }

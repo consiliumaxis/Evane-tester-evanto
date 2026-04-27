@@ -6,22 +6,35 @@ import React from 'react';
 // while the left side fades out so the centered headline stays clean.
 function HeroChart() {
   // Each candle: x position (px in viewBox), open / close / high / low (y).
-  // y grows downward so a smaller close-y than open-y means a bullish (up)
-  // candle. The set sketches a gentle uptrend.
+  // Spread across the full 0–800 viewBox width so the chart reads as a
+  // continuous market backdrop, not a corner accent.
   const candles = [
-    { x: 420, o: 232, c: 218, h: 212, l: 238 },
-    { x: 450, o: 218, c: 226, h: 213, l: 230 },
-    { x: 480, o: 226, c: 208, h: 204, l: 230 },
-    { x: 510, o: 208, c: 200, h: 196, l: 212 },
-    { x: 540, o: 200, c: 210, h: 196, l: 215 },
-    { x: 570, o: 210, c: 196, h: 190, l: 214 },
-    { x: 600, o: 196, c: 182, h: 176, l: 200 },
-    { x: 630, o: 182, c: 188, h: 176, l: 192 },
-    { x: 660, o: 188, c: 172, h: 166, l: 196 },
-    { x: 690, o: 172, c: 158, h: 152, l: 178 },
-    { x: 720, o: 158, c: 168, h: 152, l: 172 },
-    { x: 750, o: 168, c: 148, h: 142, l: 174 },
-    { x: 780, o: 148, c: 132, h: 126, l: 152 },
+    { x: 20,  o: 240, c: 248, h: 235, l: 252 },
+    { x: 50,  o: 248, c: 234, h: 230, l: 252 },
+    { x: 80,  o: 234, c: 240, h: 230, l: 244 },
+    { x: 110, o: 240, c: 226, h: 222, l: 244 },
+    { x: 140, o: 226, c: 232, h: 222, l: 236 },
+    { x: 170, o: 232, c: 220, h: 216, l: 236 },
+    { x: 200, o: 220, c: 224, h: 216, l: 228 },
+    { x: 230, o: 224, c: 212, h: 208, l: 228 },
+    { x: 260, o: 212, c: 218, h: 208, l: 222 },
+    { x: 290, o: 218, c: 204, h: 200, l: 222 },
+    { x: 320, o: 204, c: 210, h: 200, l: 214 },
+    { x: 350, o: 210, c: 196, h: 192, l: 214 },
+    { x: 380, o: 196, c: 200, h: 192, l: 204 },
+    { x: 410, o: 200, c: 188, h: 184, l: 204 },
+    { x: 440, o: 188, c: 192, h: 184, l: 196 },
+    { x: 470, o: 192, c: 178, h: 174, l: 196 },
+    { x: 500, o: 178, c: 184, h: 174, l: 188 },
+    { x: 530, o: 184, c: 168, h: 162, l: 188 },
+    { x: 560, o: 168, c: 174, h: 162, l: 178 },
+    { x: 590, o: 174, c: 156, h: 150, l: 178 },
+    { x: 620, o: 156, c: 162, h: 150, l: 166 },
+    { x: 650, o: 162, c: 146, h: 142, l: 166 },
+    { x: 680, o: 146, c: 152, h: 142, l: 156 },
+    { x: 710, o: 152, c: 134, h: 128, l: 156 },
+    { x: 740, o: 134, c: 140, h: 128, l: 144 },
+    { x: 770, o: 140, c: 122, h: 116, l: 146 },
   ];
 
   const trendPoints = candles
@@ -32,7 +45,7 @@ function HeroChart() {
     <svg
       className="hd-chart"
       viewBox="0 0 800 300"
-      preserveAspectRatio="xMaxYMid slice"
+      preserveAspectRatio="xMidYMid slice"
       aria-hidden="true"
       focusable="false"
     >
