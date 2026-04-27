@@ -74,11 +74,33 @@ main {
   padding: 112px 0 32px;
   text-align: center;
   background: transparent;
+  position: relative;
+  overflow: hidden;
 }
 
 .hd__inner {
+  position: relative;
+  z-index: 1;
   max-width: 960px;
   margin: 0 auto;
+}
+
+/* Decorative SVG candlestick backdrop — sits behind the headline as a
+ * pure visual layer. xMaxYMid slice anchors the chart to the right of
+ * the hero so the centered title is never visually cut by candles, and
+ * a radial mask fades everything left of the chart away. */
+.hd-chart {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  opacity: 0.85;
+  -webkit-mask-image: radial-gradient(ellipse 90% 110% at 100% 65%, #000 0%, rgba(0,0,0,0.55) 45%, transparent 80%);
+          mask-image: radial-gradient(ellipse 90% 110% at 100% 65%, #000 0%, rgba(0,0,0,0.55) 45%, transparent 80%);
 }
 
 .hd__title {
@@ -801,6 +823,11 @@ main {
 
 @media (max-width: 720px) {
   .hd          { padding: 64px 0 24px; }
+  .hd-chart    {
+    opacity: 0.45;
+    -webkit-mask-image: radial-gradient(ellipse 100% 110% at 90% 70%, #000 0%, rgba(0,0,0,0.5) 40%, transparent 80%);
+            mask-image: radial-gradient(ellipse 100% 110% at 90% 70%, #000 0%, rgba(0,0,0,0.5) 40%, transparent 80%);
+  }
   .eyebrow     { margin-bottom: 20px; }
   .hd__title   { font-size: clamp(2rem, 8.5vw, 2.6rem); letter-spacing: -0.02em; }
 
