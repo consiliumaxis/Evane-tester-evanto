@@ -73,8 +73,24 @@ export default function Home() {
       <main>
         <Headline />
         <VideoBlock />
-        <Reality />
-        <CtaBand />
+        {/* One shared parent for the Reality + CTA pair so the Elizabeth
+            portrait can sit as a single decorative image-layer behind
+            both sections. The wrapper is purely positional — it adds no
+            padding, no width constraint, no layout of its own. */}
+        <div className="ed-band">
+          <img
+            className="ed-portrait"
+            src="/images/portrait.webp"
+            alt=""
+            aria-hidden="true"
+            draggable={false}
+            loading="lazy"
+            decoding="async"
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+          />
+          <Reality />
+          <CtaBand />
+        </div>
       </main>
       <LandingFooter />
     </Fragment>
