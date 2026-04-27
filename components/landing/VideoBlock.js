@@ -1,30 +1,39 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-// Short, copyright-safe test video (Google's "Me at the zoo" — ~19s, embeddable).
-// Swap TEST_VIDEO_ID for the real promo clip when ready.
-const TEST_VIDEO_ID = 'jNQXAC9IVRw';
-const YT_API_SRC = 'https://www.youtube.com/iframe_api';
+// Wistia source for the hero player. The visible UI of the player (frame,
+// rounded corners, overlay Play pill, mini-player, seek bar, icon cluster
+// — every CSS class under .vb__) is unchanged from the previous iteration;
+// only the integration layer below was swapped from YouTube IFrame API to
+// Wistia Player API.
+const WISTIA_VIDEO_ID = 'u9iljczh01';
+const WISTIA_E_V1_SRC = 'https://fast.wistia.com/assets/external/E-v1.js';
 
-const YT_STATE_PLAYING = 1;
-const YT_STATE_PAUSED = 2;
+// Suppress every piece of native Wistia chrome — our own overlay controls
+// take over.
+const WISTIA_EMBED_OPTS = [
+  'autoPlay=true',
+  'muted=true',
+  'controlsVisibleOnLoad=false',
+  'playbar=false',
+  'playButton=false',
+  'bigPlayButton=false',
+  'smallPlayButton=false',
+  'volumeControl=false',
+  'fullscreenButton=false',
+  'qualityControl=false',
+  'settingsControl=false',
+  'playbackRateControl=false',
+  'captionsButton=false',
+  'endVideoBehavior=loop',
+  'videoFoam=false',
+];
 
 const DRAG_CLICK_THRESHOLD = 6;
 const MINI_MARGIN = 8;
 
-// Human-readable labels for YouTube quality codes.
-const QUALITY_LABELS = {
-  highres: '4K+',
-  hd2160: '2160p',
-  hd1440: '1440p',
-  hd1080: '1080p',
-  hd720: '720p',
-  large: '480p',
-  medium: '360p',
-  small: '240p',
-  tiny: '144p',
-  auto: 'Auto',
-};
-const QUALITY_ORDER = ['highres','hd2160','hd1440','hd1080','hd720','large','medium','small','tiny','auto'];
+// Quality is not exposed by the public Wistia Player API. Keep the gear
+// menu visually identical, but show "Auto" only — picking it is a no-op.
+const QUALITY_LABELS = { auto: 'Auto' };
 
 // ---------- icons ----------
 function IconPlay()  { return (<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.14v13.72c0 .79.87 1.27 1.54.85l10.79-6.86a1 1 0 0 0 0-1.7L9.54 4.29C8.87 3.87 8 4.35 8 5.14Z"/></svg>); }
@@ -32,6 +41,7 @@ function IconPause() { return (<svg viewBox="0 0 24 24" fill="currentColor" aria
 function IconClose() { return (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>); }
 function IconVolume() { return (<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 10v4h4l5 4V6L7 10H3zm13.5 2A4.5 4.5 0 0 0 14 8.1v7.83A4.5 4.5 0 0 0 16.5 12zM14 4.1v2.06A8 8 0 0 1 14 19.83v2.06A10 10 0 0 0 14 4.1z"/></svg>); }
 function IconMuted()  { return (<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 10v4h4l5 4V6L7 10H3zm13.59 2L19 9.41 17.59 8 15 10.59 12.41 8 11 9.41 13.59 12 11 14.59 12.41 16 15 13.41 17.59 16 19 14.59 16.59 12z"/></svg>); }
+
 function IconCC() {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -53,8 +63,6 @@ function IconCC() {
 }
 
 function IconGear() {
-  // Material-style settings icon, path strictly within the 24×24 viewBox so
-  // nothing gets clipped on the right edge of small icon buttons.
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54A.484.484 0 0 0 13.91 2h-3.84a.484.484 0 0 0-.49.42l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.71 8.48c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94 0 .32.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.26.42.49.42h3.84c.23 0 .44-.18.49-.42l.36-2.54c.59-.24 1.13-.57 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.03-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
@@ -62,26 +70,29 @@ function IconGear() {
   );
 }
 
-function loadYouTubeApi() {
+// Load Wistia E-v1.js + the per-video JSONP, then resolve with a video
+// handle once the player is ready.
+function loadWistiaPlayer(videoId) {
   if (typeof window === 'undefined') return Promise.reject();
-  if (window.YT && window.YT.Player) return Promise.resolve(window.YT);
-  if (!window.__ytApiPromise) {
-    window.__ytApiPromise = new Promise((resolve) => {
-      const existing = document.querySelector(`script[src="${YT_API_SRC}"]`);
-      const prev = window.onYouTubeIframeAPIReady;
-      window.onYouTubeIframeAPIReady = () => {
-        if (typeof prev === 'function') prev();
-        resolve(window.YT);
-      };
-      if (!existing) {
-        const tag = document.createElement('script');
-        tag.src = YT_API_SRC;
-        tag.async = true;
-        document.body.appendChild(tag);
-      }
+
+  const ensureScript = (src) => {
+    if (!document.querySelector(`script[src="${src}"]`)) {
+      const s = document.createElement('script');
+      s.src = src;
+      s.async = true;
+      document.body.appendChild(s);
+    }
+  };
+  ensureScript(WISTIA_E_V1_SRC);
+  ensureScript(`https://fast.wistia.com/embed/medias/${videoId}.jsonp`);
+
+  return new Promise((resolve) => {
+    window._wq = window._wq || [];
+    window._wq.push({
+      id: videoId,
+      onReady: (video) => resolve(video),
     });
-  }
-  return window.__ytApiPromise;
+  });
 }
 
 export default function VideoBlock() {
@@ -96,15 +107,12 @@ export default function VideoBlock() {
   const [isPaused, setIsPaused] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [ccOn, setCcOn] = useState(false);
-  const [qualities, setQualities] = useState([]);
+  const [qualities] = useState([]); // intentionally always empty for Wistia
   const [currentQuality, setCurrentQuality] = useState('auto');
   const [qualityOpen, setQualityOpen] = useState(false);
 
-  // Seek-bar state: current position and total duration (seconds).
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
-  // Scrubbing ref — while the user drags the handle we freeze updates
-  // from the player's own clock to avoid snap-back.
   const isScrubbingRef = useRef(false);
   const seekRef = useRef(null);
 
@@ -120,87 +128,69 @@ export default function VideoBlock() {
   const isMiniDismissedRef = useRef(false);
   useEffect(() => { isMiniDismissedRef.current = isMiniDismissed; }, [isMiniDismissed]);
 
-  // Boot the YouTube player exactly once. Standard YouTube controls are
-  // suppressed (controls:0) — we layer our own custom overlay on top.
+  // Wire up Wistia. Same single-instance pattern as before — this video
+  // handle is shared between main view and mini-player.
   useEffect(() => {
     let cancelled = false;
-    loadYouTubeApi().then((YT) => {
-      if (cancelled || !mountRef.current) return;
-      playerRef.current = new YT.Player(mountRef.current, {
-        videoId: TEST_VIDEO_ID,
-        playerVars: {
-          autoplay: 1,
-          mute: 1,
-          controls: 0,
-          playsinline: 1,
-          rel: 0,
-          modestbranding: 1,
-          iv_load_policy: 3,
-          disablekb: 1,
-          fs: 0,
-          loop: 1,
-          playlist: TEST_VIDEO_ID,
-          cc_load_policy: 0,
-          cc_lang_pref: 'en',
-        },
-        events: {
-          onReady: (e) => {
-            try {
-              e.target.mute();
-              if (inViewRef.current) e.target.playVideo();
-              if (typeof e.target.getAvailableQualityLevels === 'function') {
-                const q = e.target.getAvailableQualityLevels() || [];
-                setQualities(q);
-              }
-            } catch (_) {}
-            if (!cancelled) setIsReady(true);
-          },
-          onStateChange: (e) => {
-            if (cancelled) return;
-            if (e.data === YT_STATE_PLAYING) {
-              setIsPaused(false);
-              setIsMiniDismissed(false);
-              // Quality list sometimes populates only after PLAYING.
-              try {
-                if (typeof e.target.getAvailableQualityLevels === 'function') {
-                  const q = e.target.getAvailableQualityLevels() || [];
-                  if (q.length) setQualities(q);
-                }
-                if (typeof e.target.getPlaybackQuality === 'function') {
-                  setCurrentQuality(e.target.getPlaybackQuality() || 'auto');
-                }
-              } catch (_) {}
-            } else if (e.data === YT_STATE_PAUSED) {
-              setIsPaused(true);
-            }
-          },
-          onPlaybackQualityChange: (e) => {
-            if (cancelled) return;
-            setCurrentQuality(e.data || 'auto');
-          },
-        },
-      });
+    loadWistiaPlayer(WISTIA_VIDEO_ID).then((video) => {
+      if (cancelled) return;
+      playerRef.current = video;
+      try {
+        video.mute();
+        if (inViewRef.current && typeof video.play === 'function') video.play();
+        const d = typeof video.duration === 'function' ? video.duration() : 0;
+        if (d) setDuration(d);
+      } catch (_) {}
+
+      if (typeof video.bind === 'function') {
+        video.bind('play', () => {
+          if (cancelled) return;
+          setIsPaused(false);
+          setIsMiniDismissed(false);
+          try {
+            const d = video.duration();
+            if (d) setDuration((prev) => (Math.abs(prev - d) > 0.01 ? d : prev));
+          } catch (_) {}
+        });
+        video.bind('pause', () => {
+          if (cancelled) return;
+          setIsPaused(true);
+        });
+        video.bind('timechange', (t) => {
+          if (cancelled) return;
+          if (isScrubbingRef.current) return;
+          if (typeof t === 'number' && !Number.isNaN(t)) setCurrentTime(t);
+        });
+        video.bind('mutechange', (m) => {
+          if (cancelled) return;
+          setIsMuted(!!m);
+        });
+      }
+
+      setIsReady(true);
     });
 
     return () => {
       cancelled = true;
-      if (playerRef.current && typeof playerRef.current.destroy === 'function') {
-        try { playerRef.current.destroy(); } catch (_) {}
+      const v = playerRef.current;
+      if (v && typeof v.remove === 'function') {
+        try { v.remove(); } catch (_) {}
       }
+      playerRef.current = null;
     };
   }, []);
 
-  // --------- Player actions ---------
+  // --------- Player actions (mapped to Wistia API) ---------
 
-  // First activation: unmute + restart from 0.
+  // First activation: rewind + unmute + play.
   const handlePlay = useCallback(() => {
-    const p = playerRef.current;
-    if (!p) return;
+    const v = playerRef.current;
+    if (!v) return;
     try {
-      p.seekTo(0, true);
-      p.unMute();
-      if (typeof p.setVolume === 'function') p.setVolume(100);
-      p.playVideo();
+      if (typeof v.time === 'function') v.time(0);
+      if (typeof v.unmute === 'function') v.unmute();
+      if (typeof v.volume === 'function') v.volume(1);
+      if (typeof v.play === 'function') v.play();
     } catch (_) {}
     setHasActivated(true);
     setIsPaused(false);
@@ -209,17 +199,15 @@ export default function VideoBlock() {
   }, []);
 
   const togglePause = useCallback(() => {
-    const p = playerRef.current;
-    if (!p || !hasActivatedRef.current) return;
+    const v = playerRef.current;
+    if (!v || !hasActivatedRef.current) return;
     try {
-      const state = typeof p.getPlayerState === 'function' ? p.getPlayerState() : null;
-      if (state === YT_STATE_PLAYING) p.pauseVideo();
-      else p.playVideo();
+      const s = typeof v.state === 'function' ? v.state() : null;
+      if (s === 'playing') v.pause();
+      else if (typeof v.play === 'function') v.play();
     } catch (_) {}
   }, []);
 
-  // Bottom-left pill. Before activation it is the one big Play control.
-  // After activation it toggles Play/Pause.
   const handlePlayPause = useCallback((e) => {
     if (e && e.stopPropagation) e.stopPropagation();
     if (!hasActivatedRef.current) handlePlay();
@@ -228,22 +216,21 @@ export default function VideoBlock() {
 
   const handleMute = useCallback((e) => {
     if (e && e.stopPropagation) e.stopPropagation();
-    const p = playerRef.current;
-    if (!p) return;
+    const v = playerRef.current;
+    if (!v) return;
     if (!hasActivatedRef.current) {
-      // Turning sound on from the muted autoplay phase is effectively an
-      // activation — go through the same seek+unmute+play path so the
-      // video restarts from the beginning with sound, per spec.
+      // Un-muting from the silent autoplay phase counts as activation —
+      // route through handlePlay so the video also rewinds to 0, per spec.
       handlePlay();
       return;
     }
     try {
       if (isMuted) {
-        p.unMute();
-        if (typeof p.setVolume === 'function') p.setVolume(100);
+        if (typeof v.unmute === 'function') v.unmute();
+        if (typeof v.volume === 'function') v.volume(1);
         setIsMuted(false);
       } else {
-        p.mute();
+        if (typeof v.mute === 'function') v.mute();
         setIsMuted(true);
       }
     } catch (_) {}
@@ -251,37 +238,32 @@ export default function VideoBlock() {
 
   const handleCC = useCallback((e) => {
     if (e && e.stopPropagation) e.stopPropagation();
-    const p = playerRef.current;
-    if (!p) return;
+    const v = playerRef.current;
+    if (!v) return;
     try {
       if (ccOn) {
-        if (typeof p.unloadModule === 'function') p.unloadModule('captions');
+        if (typeof v.captionsDisable === 'function') v.captionsDisable();
       } else {
-        if (typeof p.loadModule === 'function') p.loadModule('captions');
-        if (typeof p.setOption === 'function') {
-          p.setOption('captions', 'reload', true);
-        }
+        if (typeof v.captionsEnable === 'function') v.captionsEnable();
       }
     } catch (_) {}
-    setCcOn((v) => !v);
+    setCcOn((b) => !b);
   }, [ccOn]);
 
   const handleQualityToggle = useCallback((e) => {
     if (e && e.stopPropagation) e.stopPropagation();
-    setQualityOpen((v) => !v);
+    setQualityOpen((b) => !b);
   }, []);
 
+  // Wistia handles bitrate adaptively; the public Player API doesn't expose
+  // a quality switch. The menu stays — it's part of the existing UI — but
+  // picking an option is a visual no-op.
   const handleQualityPick = useCallback((q) => (e) => {
     if (e && e.stopPropagation) e.stopPropagation();
-    const p = playerRef.current;
-    if (p && typeof p.setPlaybackQuality === 'function') {
-      try { p.setPlaybackQuality(q); } catch (_) {}
-    }
     setCurrentQuality(q);
     setQualityOpen(false);
   }, []);
 
-  // Close quality menu when clicking elsewhere.
   useEffect(() => {
     if (!qualityOpen) return;
     const onDocDown = (ev) => {
@@ -294,32 +276,31 @@ export default function VideoBlock() {
   }, [qualityOpen]);
 
   // --------- Seek bar ---------
-  // Poll the YouTube player for current time + duration every 250 ms and
-  // mirror it into React state so the seek bar re-renders. Freezes while
-  // the user is actively scrubbing.
+  // Mirror duration + current time into React state every 250 ms while
+  // not scrubbing. Wistia also fires 'timechange', but the polling loop
+  // covers initial duration availability and edge cases uniformly.
   useEffect(() => {
     if (!isReady) return undefined;
     const id = setInterval(() => {
       if (isScrubbingRef.current) return;
-      const p = playerRef.current;
-      if (!p) return;
+      const v = playerRef.current;
+      if (!v) return;
       try {
-        if (typeof p.getDuration === 'function') {
-          const d = p.getDuration();
+        if (typeof v.duration === 'function') {
+          const d = v.duration();
           if (d && !Number.isNaN(d)) {
             setDuration((prev) => (Math.abs(prev - d) > 0.01 ? d : prev));
           }
         }
-        if (typeof p.getCurrentTime === 'function') {
-          const t = p.getCurrentTime();
-          if (!Number.isNaN(t)) setCurrentTime(t);
+        if (typeof v.time === 'function') {
+          const t = v.time();
+          if (typeof t === 'number' && !Number.isNaN(t)) setCurrentTime(t);
         }
       } catch (_) {}
     }, 250);
     return () => clearInterval(id);
   }, [isReady]);
 
-  // Convert a pointer clientX into a time and seek the player.
   const seekFromPointer = useCallback((clientX) => {
     const el = seekRef.current;
     if (!el) return;
@@ -328,9 +309,9 @@ export default function VideoBlock() {
     const rect = el.getBoundingClientRect();
     const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
     const t = ratio * d;
-    const p = playerRef.current;
-    if (p && typeof p.seekTo === 'function') {
-      try { p.seekTo(t, true); } catch (_) {}
+    const v = playerRef.current;
+    if (v && typeof v.time === 'function') {
+      try { v.time(t); } catch (_) {}
     }
     setCurrentTime(t);
   }, [duration]);
@@ -362,9 +343,9 @@ export default function VideoBlock() {
 
   const handleCloseMini = useCallback((e) => {
     if (e && e.stopPropagation) e.stopPropagation();
-    const p = playerRef.current;
-    if (p && typeof p.pauseVideo === 'function') {
-      try { p.pauseVideo(); } catch (_) {}
+    const v = playerRef.current;
+    if (v && typeof v.pause === 'function') {
+      try { v.pause(); } catch (_) {}
     }
     setIsMiniDismissed(true);
     setIsMini(false);
@@ -423,20 +404,16 @@ export default function VideoBlock() {
     if (!wasDrag && hasActivatedRef.current) togglePause();
   }, [togglePause]);
 
-  // Main-view frame click: tap on the video surface between controls
-  // toggles pause. Buttons inside the frame stopPropagation so they
-  // don't bubble here.
   const handleBlockClick = useCallback((e) => {
     if (isMini) return;
     if (!hasActivatedRef.current) return;
     const tag = (e.target.tagName || '').toLowerCase();
     if (tag === 'a' || tag === 'button') return;
-    // Also ignore clicks that originated inside an overlay control.
     if (e.target && e.target.closest && e.target.closest('.vb__ctrl')) return;
     togglePause();
   }, [isMini, togglePause]);
 
-  // Spacebar pause/resume.
+  // Spacebar pause/resume, scoped to hero in viewport + activated.
   useEffect(() => {
     if (!inView || !hasActivated) return;
     const onKey = (e) => {
@@ -452,7 +429,8 @@ export default function VideoBlock() {
     return () => window.removeEventListener('keydown', onKey);
   }, [inView, hasActivated, togglePause]);
 
-  // Viewport behaviour: mini-player on scroll-out (when activated), not a pause.
+  // Viewport behaviour: open mini-player on scroll-out (when activated),
+  // pause silent autoplay when scrolling out before activation.
   useEffect(() => {
     const el = blockRef.current;
     if (!el || typeof IntersectionObserver === 'undefined') return;
@@ -460,20 +438,19 @@ export default function VideoBlock() {
       ([entry]) => {
         const visible = entry.isIntersecting && entry.intersectionRatio >= 0.25;
         setInView(visible);
-        const p = playerRef.current;
+        const v = playerRef.current;
         try {
           if (!visible && hasActivatedRef.current && !isMiniDismissedRef.current) {
             setIsMini(true);
           } else if (!visible && !hasActivatedRef.current) {
             setIsMini(false);
-            if (p && typeof p.getPlayerState === 'function' &&
-                p.getPlayerState() === YT_STATE_PLAYING) {
-              p.pauseVideo();
+            if (v && typeof v.state === 'function' && v.state() === 'playing') {
+              v.pause();
             }
           } else {
             setIsMini(false);
-            if (p && visible && !hasActivatedRef.current) {
-              p.playVideo();
+            if (v && visible && !hasActivatedRef.current && typeof v.play === 'function') {
+              v.play();
             }
           }
         } catch (_) {}
@@ -496,21 +473,22 @@ export default function VideoBlock() {
     bottom: 'auto',
   } : undefined;
 
-  // Derive what the Play/Pause pill label should show.
   const showPlayIcon = !hasActivated || isPaused;
   const playLabel = !hasActivated ? 'Play' : (isPaused ? 'Play' : 'Pause');
 
-  // Build quality menu list — order known codes first, then any others.
+  // Wistia exposes no quality list, so this collapses to the "Auto" entry
+  // we keep around to preserve the existing menu look.
   const qualityList = (() => {
     const out = [];
-    const seen = new Set();
-    QUALITY_ORDER.forEach((q) => {
-      if (qualities.includes(q)) { out.push(q); seen.add(q); }
-    });
-    qualities.forEach((q) => { if (!seen.has(q)) out.push(q); });
+    qualities.forEach((q) => { if (!out.includes(q)) out.push(q); });
     if (!out.includes('auto')) out.push('auto');
     return out;
   })();
+
+  const wistiaMountClass =
+    'vb__mount wistia_embed wistia_async_' +
+    WISTIA_VIDEO_ID +
+    ' ' + WISTIA_EMBED_OPTS.join(' ');
 
   return (
     <section ref={blockRef} className="vb" aria-label="Intro video">
@@ -526,16 +504,13 @@ export default function VideoBlock() {
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
           >
-            <div ref={mountRef} className="vb__mount" />
+            {/* Wistia hydrates this div in place; .vb__mount keeps the same
+                positioning + size + clipping CSS as before. */}
+            <div ref={mountRef} className={wistiaMountClass} />
             <div className="vb__overlay" aria-hidden="true" />
 
-            {/* Custom main controls — hidden when the panel is in mini mode. */}
             {!isMini && (
               <React.Fragment>
-                {/* Seek bar: mounts only after the user has triggered the
-                    first Play (same moment the video starts with sound). It
-                    stays mounted after that — visible during both play and
-                    pause. A fresh page load starts without it again. */}
                 {hasActivated && (
                   <div className="vb__ctrl vb__ctrl-seek">
                     <div
@@ -640,7 +615,6 @@ export default function VideoBlock() {
               </React.Fragment>
             )}
 
-            {/* Mini-player chrome — unchanged. */}
             {isMini && (
               <React.Fragment>
                 <div className="vb__mini-grip" aria-hidden="true">
