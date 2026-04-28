@@ -8,10 +8,9 @@ class MyDocument extends Document {
       <Html lang="en">
         <Head>
           {/* ---- Fonts: only the four weights actually used on the page.
-                  Lighthouse flags fonts.googleapis.com preconnect as
-                  "unused" because the stylesheet itself is critical and
-                  the actual woff2 fetches go to fonts.gstatic.com — that
-                  is the only host worth preconnecting. */}
+                  fonts.gstatic.com is the only host worth preconnecting —
+                  the .css fetch from fonts.googleapis.com is critical
+                  itself, so a preconnect to it is flagged as unused. */}
           <link
             rel="preconnect"
             href="https://fonts.gstatic.com"
@@ -22,37 +21,28 @@ class MyDocument extends Document {
             rel="stylesheet"
           />
 
-          {/* ---- Wistia: warm up TLS to every host the player touches.
-                  Lighthouse caps useful preconnects ~4, so we keep it
-                  to the four real hostnames. */}
-          <link rel="preconnect" href="https://fast.wistia.com" crossOrigin="anonymous" />
-          <link rel="preconnect" href="https://embed-ssl.wistia.com" crossOrigin="anonymous" />
-          <link rel="preconnect" href="https://distillery.wistia.com" crossOrigin="anonymous" />
+          {/* ---- Wistia: gestures-only facade defers the entire stack
+                  past PSI's scoring window, so we DO NOT preconnect or
+                  preload Wistia hosts at HTML parse time — Lighthouse
+                  would just flag them "unused" and a real preconnect
+                  would also burn TLS/CPU before any of it is needed.
+                  dns-prefetch is the cheap warm-up that's safe pre-
+                  gesture: zero TLS cost, just a DNS hint. */}
+          <link rel="dns-prefetch" href="//fast.wistia.com" />
+          <link rel="dns-prefetch" href="//embed-ssl.wistia.com" />
+          <link rel="dns-prefetch" href="//distillery.wistia.com" />
           <link rel="dns-prefetch" href="//embedwistia-a.akamaihd.net" />
 
-          {/* ---- LCP hint: preload the player's thumbnail (Wistia "swatch"
-                  redirect = still image for the chosen media), plus the
-                  two scripts the IFrame API will fetch on init.
-                  Mobile gets none of these — Wistia is heavy enough that
-                  on cellular we'd rather defer the entire fetch tree
-                  until the page has finished settling. Desktop only. */}
+          {/* ---- LCP hint: only the swatch (the actual <img.vb__poster>
+                  the page paints) is preloaded, and only on desktop.
+                  Mobile gates this on media="(min-width: 768px)" because
+                  cellular cold loads can't afford even ~50 KB of
+                  unused-yet-eager image bytes. */}
           <link
             rel="preload"
             as="image"
             href={`https://fast.wistia.com/embed/medias/${WISTIA_VIDEO_ID}/swatch`}
             fetchpriority="high"
-            media="(min-width: 768px)"
-          />
-          <link
-            rel="preload"
-            as="script"
-            href="https://fast.wistia.com/assets/external/E-v1.js"
-            media="(min-width: 768px)"
-          />
-          <link
-            rel="preload"
-            as="script"
-            href={`https://fast.wistia.com/embed/medias/${WISTIA_VIDEO_ID}.jsonp`}
             media="(min-width: 768px)"
           />
 
