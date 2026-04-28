@@ -29,25 +29,28 @@ class MyDocument extends Document {
 
           {/* ---- LCP hint: preload the player's thumbnail (Wistia "swatch"
                   redirect = still image for the chosen media), plus the
-                  two scripts the IFrame API will fetch on init. The
-                  browser parallelises these with the HTML parse so by
-                  the time our lazy boot kicks in they're already warm
-                  in the cache. */}
+                  two scripts the IFrame API will fetch on init.
+                  Mobile gets none of these — Wistia is heavy enough that
+                  on cellular we'd rather defer the entire fetch tree
+                  until the page has finished settling. Desktop only. */}
           <link
             rel="preload"
             as="image"
             href={`https://fast.wistia.com/embed/medias/${WISTIA_VIDEO_ID}/swatch`}
             fetchpriority="high"
+            media="(min-width: 768px)"
           />
           <link
             rel="preload"
             as="script"
             href="https://fast.wistia.com/assets/external/E-v1.js"
+            media="(min-width: 768px)"
           />
           <link
             rel="preload"
             as="script"
             href={`https://fast.wistia.com/embed/medias/${WISTIA_VIDEO_ID}.jsonp`}
+            media="(min-width: 768px)"
           />
 
           <meta name="theme-color" content="#0b0e14" />

@@ -10,9 +10,14 @@ const WISTIA_E_V1_SRC = 'https://fast.wistia.com/assets/external/E-v1.js';
 
 // Suppress every piece of native Wistia chrome — our own overlay controls
 // take over.
+// Wistia options. Every piece of native chrome is suppressed; our own
+// overlay takes over. silentAutoPlay='allow' tells Wistia to start
+// muted on its own — the API path through handlePlay later flips
+// audio + restart on first user gesture.
 const WISTIA_EMBED_OPTS = [
   'autoPlay=true',
   'muted=true',
+  'silentAutoPlay=allow',
   'controlsVisibleOnLoad=false',
   'playbar=false',
   'playButton=false',
@@ -26,6 +31,11 @@ const WISTIA_EMBED_OPTS = [
   'captionsButton=false',
   'endVideoBehavior=loop',
   'videoFoam=false',
+  // Disable chapters / captions UI hooks even if the asset has them
+  // configured server-side. Saves the chapters.js / captions.js module
+  // loads on top of E-v1.js when those features aren't part of our UX.
+  'chapters=false',
+  'doNotTrack=true',
 ];
 
 const DRAG_CLICK_THRESHOLD = 6;
@@ -232,29 +242,44 @@ export default function VideoBlock() {
       });
     };
 
-    // (a) Trigger when the video block is within ~500px of the viewport.
-    const el = blockRef.current;
-    let lazyIo = null;
-    if (el && typeof IntersectionObserver !== 'undefined') {
-      lazyIo = new IntersectionObserver((entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          boot();
-          if (lazyIo) lazyIo.disconnect();
-        }
-      }, { rootMargin: '500px' });
-      lazyIo.observe(el);
-    } else {
-      boot();
-    }
+    // Decide a boot strategy by viewport. Mobile is much more sensitive
+    // to TBT than to a slightly later first frame, so on phones we wait
+    // for an idle slice (or a 4 s timeout) and skip the IntersectionObserver
+    // eager hint entirely. Desktop keeps the original IO + rIC duo so
+    // playback starts as soon as the user is anywhere near the video.
+    const isMobile =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(max-width: 767px)').matches;
 
-    // (b) Idle-time fallback so the player still warms up on long pages
-    //     where the user never scrolls toward the video.
+    let lazyIo = null;
     let idleId = null;
     let idleTimer = null;
-    if (typeof window !== 'undefined' && window.requestIdleCallback) {
-      idleId = window.requestIdleCallback(boot, { timeout: 2500 });
+
+    if (isMobile) {
+      if (typeof window !== 'undefined' && window.requestIdleCallback) {
+        idleId = window.requestIdleCallback(boot, { timeout: 4000 });
+      } else {
+        idleTimer = setTimeout(boot, 2200);
+      }
     } else {
-      idleTimer = setTimeout(boot, 1500);
+      const el = blockRef.current;
+      if (el && typeof IntersectionObserver !== 'undefined') {
+        lazyIo = new IntersectionObserver((entries) => {
+          if (entries.some((e) => e.isIntersecting)) {
+            boot();
+            if (lazyIo) lazyIo.disconnect();
+          }
+        }, { rootMargin: '500px' });
+        lazyIo.observe(el);
+      } else {
+        boot();
+      }
+      if (typeof window !== 'undefined' && window.requestIdleCallback) {
+        idleId = window.requestIdleCallback(boot, { timeout: 2500 });
+      } else {
+        idleTimer = setTimeout(boot, 1500);
+      }
     }
 
     return () => {
@@ -389,7 +414,15 @@ export default function VideoBlock() {
           if (typeof t === 'number' && !Number.isNaN(t)) setCurrentTime(t);
         }
       } catch (_) {}
-    }, 250);
+    },
+    // 600 ms on mobile (timechange event still drives the seek-bar
+    // smoothly), 250 ms on desktop where the cost is negligible.
+    typeof window !== 'undefined' &&
+      window.matchMedia &&
+      window.matchMedia('(max-width: 767px)').matches
+      ? 600
+      : 250
+    );
     return () => clearInterval(id);
   }, [isReady]);
 
