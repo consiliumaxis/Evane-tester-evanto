@@ -259,6 +259,7 @@ main {
   height: 100%;
   border: 0;
   pointer-events: none;
+  z-index: 1;            /* sits above the static poster */
   /* Match the frame's radius so the iframe surface itself is clipped
    * cleanly regardless of how the browser composites it. */
   border-radius: var(--radius-video);
@@ -275,8 +276,9 @@ main {
 
 /* Static Wistia thumbnail / swatch — sits behind the iframe so there is
  * always an LCP-eligible image painted in the frame even before the
- * Wistia bundle has finished booting. The iframe layers on top once it
- * loads. */
+ * Wistia bundle has finished booting. Fades to nothing the moment the
+ * Wistia player reports actual playback so a frozen still never sits
+ * over moving frames. */
 .vb__poster {
   position: absolute;
   inset: 0;
@@ -287,6 +289,16 @@ main {
   z-index: 0;
   pointer-events: none;
   border-radius: var(--radius-video);
+  transition: opacity 0.35s ease;
+}
+
+.vb__poster--hidden {
+  opacity: 0;
+  visibility: hidden;
+  /* Keep transition on opacity but defer visibility flip until the fade
+   * completes so the still doesn't pop out before it has finished
+   * dissolving. */
+  transition: opacity 0.35s ease, visibility 0s linear 0.35s;
 }
 
 .vb__overlay {
@@ -341,45 +353,6 @@ main {
   color: #fff;
   flex-shrink: 0;
   padding: 0 4px;
-}
-
-/* "Click for sound" prompt pill, top-right of the video, shown only while
- * the muted autoplay is still in effect. Click activates audio + restart. */
-.vb__sound-pill {
-  position: absolute;
-  top: 18px;
-  right: 18px;
-  z-index: 5;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 14px 9px 18px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #fff;
-  font-family: var(--font);
-  font-size: 0.85rem;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  cursor: pointer;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
-  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.5);
-}
-
-.vb__sound-pill:hover,
-.vb__sound-pill:focus-visible {
-  background: rgba(201, 164, 76, 0.32);
-  border-color: var(--gold-bright);
-  outline: none;
-}
-
-.vb__sound-pill svg {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
 }
 
 /* Generic icon button — transparent, hover lifts to white-tint. */
@@ -900,8 +873,6 @@ main {
   .vb__seek-track,
   .vb__seek-fill   { height: 3px; }
   .vb__seek-handle { width: 11px; height: 11px; }
-  .vb__sound-pill  { top: 12px; right: 12px; padding: 8px 12px 8px 14px; font-size: 0.78rem; }
-  .vb__sound-pill svg { width: 16px; height: 16px; }
 
   .rl          { padding: 40px 0 20px; }
   .rl__text    { line-height: 1.65; }
@@ -921,8 +892,7 @@ main {
   /* Performance: backdrop-filter blur is one of the most expensive
    * paints on mobile GPUs. Drop it to a lighter value (or 0) on phones
    * — the dark-translucent panels still read fine without it. */
-  .vb__panel,
-  .vb__sound-pill {
+  .vb__panel {
     backdrop-filter: blur(2px);
     -webkit-backdrop-filter: blur(2px);
     background: rgba(0, 0, 0, 0.7);

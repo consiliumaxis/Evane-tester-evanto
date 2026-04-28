@@ -137,6 +137,10 @@ export default function VideoBlock() {
   const [isMiniDismissed, setIsMiniDismissed] = useState(false);
   const [miniPos, setMiniPos] = useState(null);
 
+  // Static poster fades away once the iframe has actual video frames so
+  // it never sits as a frozen still on top of moving content.
+  const [posterHidden, setPosterHidden] = useState(false);
+
   // Auto-hide for the bottom panel / mini chrome. After 3 s of no
   // interaction we fade the controls out; any pointer-down or keyboard
   // interaction inside the player resets the timer.
@@ -197,6 +201,9 @@ export default function VideoBlock() {
             if (cancelled) return;
             setIsPaused(false);
             setIsMiniDismissed(false);
+            // Real playback has started — drop the static poster so the
+            // moving frames are never sitting under a still image.
+            setPosterHidden(true);
             try {
               const d = video.duration();
               if (d) setDuration((prev) => (Math.abs(prev - d) > 0.01 ? d : prev));
@@ -208,6 +215,10 @@ export default function VideoBlock() {
           });
           video.bind('timechange', (t) => {
             if (cancelled) return;
+            // Belt-and-braces: a non-zero time tick guarantees frames
+            // are flowing, even on browsers where 'play' is suppressed
+            // during muted autoplay.
+            if (typeof t === 'number' && t > 0) setPosterHidden(true);
             if (isScrubbingRef.current) return;
             if (typeof t === 'number' && !Number.isNaN(t)) setCurrentTime(t);
           });
@@ -505,7 +516,7 @@ export default function VideoBlock() {
     const tag = (e.target.tagName || '').toLowerCase();
     if (tag === 'a' || tag === 'button') return;
     if (e.target && e.target.closest &&
-        e.target.closest('.vb__panel, .vb__sound-pill, .vb__mini-close, .vb__mini-grip'))
+        e.target.closest('.vb__panel, .vb__mini-close, .vb__mini-grip'))
       return;
     // First tap on the video starts playback with sound (same activation
     // path as the "Click for sound" pill); subsequent taps toggle pause.
@@ -607,14 +618,14 @@ export default function VideoBlock() {
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
           >
-            {/* Wistia hydrates this div in place; .vb__mount keeps the same
-                positioning + size + clipping CSS as before. */}
-            <div ref={mountRef} className={wistiaMountClass} />
-            {/* Static poster from Wistia's /swatch redirect — gives an
-                immediate LCP candidate while E-v1.js + JSONP load. The
-                iframe later layers on top of it. */}
+            {/* Static poster from Wistia's /swatch redirect, painted
+                BEFORE the mount so source-order + an explicit lower
+                z-index keep it strictly behind the iframe. Gives an
+                instant LCP candidate, then fades out the moment Wistia
+                reports actual playback so it never visually freezes
+                over the moving frames. */}
             <img
-              className="vb__poster"
+              className={'vb__poster' + (posterHidden ? ' vb__poster--hidden' : '')}
               src={`https://fast.wistia.com/embed/medias/${WISTIA_VIDEO_ID}/swatch`}
               alt=""
               aria-hidden="true"
@@ -624,22 +635,10 @@ export default function VideoBlock() {
               decoding="async"
               onError={(e) => { e.currentTarget.style.display = 'none'; }}
             />
+            {/* Wistia hydrates this div in place; .vb__mount keeps the
+                same positioning + size + clipping CSS as before. */}
+            <div ref={mountRef} className={wistiaMountClass} />
             <div className="vb__overlay" aria-hidden="true" />
-
-            {/* "Click for sound" prompt, top-right, while still in
-                muted-autoplay phase. Click activates sound + restart. */}
-            {!hasActivated && !isMini && (
-              <button
-                type="button"
-                className="vb__sound-pill"
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={handlePlay}
-                aria-label="Click for sound"
-              >
-                <span>Click for sound</span>
-                <IconVolume />
-              </button>
-            )}
 
             {/* Mini-only chrome: drag grip, close button, paused overlay. */}
             {isMini && (
