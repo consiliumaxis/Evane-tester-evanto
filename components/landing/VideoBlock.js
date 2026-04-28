@@ -137,6 +137,31 @@ export default function VideoBlock() {
   const [isMiniDismissed, setIsMiniDismissed] = useState(false);
   const [miniPos, setMiniPos] = useState(null);
 
+  // Auto-hide for the bottom panel / mini chrome. After 3 s of no
+  // interaction we fade the controls out; any pointer-down or keyboard
+  // interaction inside the player resets the timer.
+  const [controlsVisible, setControlsVisible] = useState(false);
+  const hideTimerRef = useRef(null);
+
+  const showControls = useCallback(() => {
+    setControlsVisible(true);
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    hideTimerRef.current = setTimeout(() => {
+      setControlsVisible(false);
+      hideTimerRef.current = null;
+    }, 3000);
+  }, []);
+
+  useEffect(() => () => {
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+  }, []);
+
+  // Reveal the freshly-mounted controls right after the user activates
+  // playback for the first time, then start the auto-hide countdown.
+  useEffect(() => {
+    if (hasActivated) showControls();
+  }, [hasActivated, showControls]);
+
   const hasActivatedRef = useRef(false);
   useEffect(() => { hasActivatedRef.current = hasActivated; }, [hasActivated]);
   const inViewRef = useRef(true);
@@ -384,7 +409,8 @@ export default function VideoBlock() {
     if (!isScrubbingRef.current) return;
     if (e && e.stopPropagation) e.stopPropagation();
     seekFromPointer(e.clientX);
-  }, [seekFromPointer]);
+    showControls();
+  }, [seekFromPointer, showControls]);
 
   const handleSeekUp = useCallback((e) => {
     if (!isScrubbingRef.current) return;
@@ -498,10 +524,11 @@ export default function VideoBlock() {
       if (tag === 'button' || tag === 'a') return;
       e.preventDefault();
       togglePause();
+      showControls();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [inView, hasActivated, togglePause]);
+  }, [inView, hasActivated, togglePause, showControls]);
 
   // Viewport behaviour: open mini-player on scroll-out (when activated),
   // pause silent autoplay when scrolling out before activation.
@@ -538,7 +565,8 @@ export default function VideoBlock() {
   const frameClass =
     'vb__frame' +
     (isReady ? ' vb__frame--ready' : '') +
-    (isMini ? ' vb__frame--mini' : '');
+    (isMini ? ' vb__frame--mini' : '') +
+    (hasActivated && !controlsVisible ? ' vb__frame--controls-hidden' : '');
 
   const frameStyle = isMini && miniPos ? {
     left: miniPos.x + 'px',
@@ -573,6 +601,7 @@ export default function VideoBlock() {
             className={frameClass}
             style={frameStyle}
             onClick={handleBlockClick}
+            onPointerDownCapture={showControls}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}

@@ -197,6 +197,26 @@ main {
   border-color: var(--border-gold);
 }
 
+/* Auto-hide chrome ----------------------------------------------------------
+ * 3 s after the last interaction, the bottom panel + mini-only grip /
+ * close button fade out. Click anywhere on the player to bring them back.
+ * Hidden state uses pointer-events: none + visibility: hidden so the user
+ * can still tap straight through to the frame, which also re-shows the UI. */
+.vb__panel,
+.vb__mini-grip,
+.vb__mini-close {
+  transition: opacity 0.22s ease;
+}
+
+.vb__frame--controls-hidden .vb__panel,
+.vb__frame--controls-hidden .vb__mini-grip,
+.vb__frame--controls-hidden .vb__mini-close {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.22s ease, visibility 0s linear 0.22s;
+}
+
 /* ----- Mini-player ---------------------------------------------------------
  * Triggered by the IntersectionObserver in VideoBlock.js whenever the user
  * has already activated the player (audio on) and scrolls the hero out of
