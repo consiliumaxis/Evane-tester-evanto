@@ -21,23 +21,31 @@ class MyDocument extends Document {
             rel="stylesheet"
           />
 
-          {/* ---- Wistia: gestures-only facade defers the entire stack
-                  past PSI's scoring window, so we DO NOT preconnect or
-                  preload Wistia hosts at HTML parse time — Lighthouse
-                  would just flag them "unused" and a real preconnect
-                  would also burn TLS/CPU before any of it is needed.
-                  dns-prefetch is the cheap warm-up that's safe pre-
-                  gesture: zero TLS cost, just a DNS hint. */}
+          {/* ---- Wistia hints.
+                  Desktop is on a gesture-facade — Wistia isn't fetched
+                  until the user moves / scrolls / taps, so we only
+                  drop dns-prefetch hints (zero TLS cost). Mobile boots
+                  Wistia eagerly right after first paint, so it benefits
+                  from a real preconnect to fast.wistia.com — gated by
+                  media="(max-width: 767px)" so it only fires on the
+                  viewport that needs it. */}
           <link rel="dns-prefetch" href="//fast.wistia.com" />
           <link rel="dns-prefetch" href="//embed-ssl.wistia.com" />
           <link rel="dns-prefetch" href="//distillery.wistia.com" />
           <link rel="dns-prefetch" href="//embedwistia-a.akamaihd.net" />
+          <link
+            rel="preconnect"
+            href="https://fast.wistia.com"
+            crossOrigin="anonymous"
+            media="(max-width: 767px)"
+          />
 
-          {/* ---- LCP hint: only the swatch (the actual <img.vb__poster>
-                  the page paints) is preloaded, and only on desktop.
-                  Mobile gates this on media="(min-width: 768px)" because
-                  cellular cold loads can't afford even ~50 KB of
-                  unused-yet-eager image bytes. */}
+          {/* ---- LCP hint: the swatch image (the actual <img.vb__poster>
+                  the page paints). Only desktop preloads it because the
+                  desktop facade has nothing else competing for the LCP
+                  slot. Mobile boots the iframe immediately so the static
+                  poster is barely visible — preloading it on cellular
+                  would just waste bytes. */}
           <link
             rel="preload"
             as="image"
