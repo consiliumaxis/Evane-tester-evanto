@@ -7,8 +7,11 @@ class MyDocument extends Document {
     return (
       <Html lang="en">
         <Head>
-          {/* ---- Fonts: only the four weights actually used on the page. */}
-          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          {/* ---- Fonts: only the four weights actually used on the page.
+                  Lighthouse flags fonts.googleapis.com preconnect as
+                  "unused" because the stylesheet itself is critical and
+                  the actual woff2 fetches go to fonts.gstatic.com — that
+                  is the only host worth preconnecting. */}
           <link
             rel="preconnect"
             href="https://fonts.gstatic.com"
