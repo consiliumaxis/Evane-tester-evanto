@@ -613,8 +613,6 @@ main {
 }
 
 .rl__inner {
-  position: relative;
-  z-index: 1;
   max-width: 780px;
   margin: 0 auto;
 }
@@ -646,11 +644,6 @@ main {
   padding: 48px 0 96px;
   text-align: center;
   background: transparent;
-}
-
-.cta-band > .container {
-  position: relative;
-  z-index: 1;
 }
 
 .cta-band__title {
@@ -1039,53 +1032,3 @@ main {
   .error-hero         { padding: 72px 0; }
 }
 
-/* =========================================================================
- * Elizabeth backdrop — ONE shared image-layer that spans the Reality +
- * CTA pair. Lives inside a single .ed-band wrapper that sits in
- * pages/index.js between <VideoBlock /> and <LandingFooter />. The two
- * sections inside (.rl and .cta-band) keep all of their own padding,
- * spacing and typography untouched; the wrapper only adds positioning.
- * ========================================================================= */
-
-.ed-band {
-  position: relative;
-  overflow: hidden;
-  /* No padding / max-width / display so the wrapper does not affect the
-   * size or rhythm of .rl or .cta-band — the two sections behave
-   * exactly as if they were direct children of <main>. */
-}
-
-.ed-portrait {
-  position: absolute;
-  inset: 0 auto 0 0;            /* desktop: pinned to the LEFT, full wrapper height */
-  z-index: 0;
-  pointer-events: none;
-  user-select: none;
-  -webkit-user-select: none;
-  width: clamp(320px, 36%, 520px);
-  height: 100%;
-  object-fit: cover;
-  object-position: center 30%;
-  opacity: 0.5;
-  /* Soft elliptical edge fade so hands / shoulders / top / bottom of
-   * the figure dissolve into the dark page gradient instead of ending
-   * in a hard rectangle. */
-  -webkit-mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, #000 30%, transparent 78%);
-          mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, #000 30%, transparent 78%);
-}
-
-/* Mobile: same single image becomes a centered, full-width backdrop
- * spanning both sections. The figure stays centered via
- * object-position; mask keeps edges blended; width: 100% (not 100vw)
- * so no horizontal scroll is introduced. */
-@media (max-width: 767px) {
-  .ed-portrait {
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-position: center;
-    opacity: 0.3;
-    -webkit-mask-image: radial-gradient(ellipse 70% 75% at 50% 50%, #000 22%, transparent 78%);
-            mask-image: radial-gradient(ellipse 70% 75% at 50% 50%, #000 22%, transparent 78%);
-  }
-}
