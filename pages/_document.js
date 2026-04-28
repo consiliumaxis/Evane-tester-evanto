@@ -1,13 +1,13 @@
 import Document, { Html, Head, Main, NextScript } from 'next/document';
 
+const WISTIA_VIDEO_ID = 'ttoixchr7k';
+
 class MyDocument extends Document {
   render() {
     return (
       <Html lang="en">
         <Head>
-          {/* Fonts: trimmed to four weights actually used on the page
-              (400 body, 600 eyebrow/CTA/labels, 700 headlines,
-              800 hero accent) — drops one font file from initial fetch. */}
+          {/* ---- Fonts: only the four weights actually used on the page. */}
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link
             rel="preconnect"
@@ -19,12 +19,36 @@ class MyDocument extends Document {
             rel="stylesheet"
           />
 
-          {/* Warm up the TLS handshake to Wistia in advance so the lazy
-              player boot doesn't pay for it. */}
+          {/* ---- Wistia: warm up TLS to every host the player touches.
+                  Lighthouse caps useful preconnects ~4, so we keep it
+                  to the four real hostnames. */}
           <link rel="preconnect" href="https://fast.wistia.com" crossOrigin="anonymous" />
-          <link rel="dns-prefetch" href="//fast.wistia.com" />
-          <link rel="dns-prefetch" href="//embed-ssl.wistia.com" />
+          <link rel="preconnect" href="https://embed-ssl.wistia.com" crossOrigin="anonymous" />
+          <link rel="preconnect" href="https://distillery.wistia.com" crossOrigin="anonymous" />
           <link rel="dns-prefetch" href="//embedwistia-a.akamaihd.net" />
+
+          {/* ---- LCP hint: preload the player's thumbnail (Wistia "swatch"
+                  redirect = still image for the chosen media), plus the
+                  two scripts the IFrame API will fetch on init. The
+                  browser parallelises these with the HTML parse so by
+                  the time our lazy boot kicks in they're already warm
+                  in the cache. */}
+          <link
+            rel="preload"
+            as="image"
+            href={`https://fast.wistia.com/embed/medias/${WISTIA_VIDEO_ID}/swatch`}
+            fetchpriority="high"
+          />
+          <link
+            rel="preload"
+            as="script"
+            href="https://fast.wistia.com/assets/external/E-v1.js"
+          />
+          <link
+            rel="preload"
+            as="script"
+            href={`https://fast.wistia.com/embed/medias/${WISTIA_VIDEO_ID}.jsonp`}
+          />
 
           <meta name="theme-color" content="#0b0e14" />
         </Head>

@@ -610,6 +610,20 @@ export default function VideoBlock() {
             {/* Wistia hydrates this div in place; .vb__mount keeps the same
                 positioning + size + clipping CSS as before. */}
             <div ref={mountRef} className={wistiaMountClass} />
+            {/* Static poster from Wistia's /swatch redirect — gives an
+                immediate LCP candidate while E-v1.js + JSONP load. The
+                iframe later layers on top of it. */}
+            <img
+              className="vb__poster"
+              src={`https://fast.wistia.com/embed/medias/${WISTIA_VIDEO_ID}/swatch`}
+              alt=""
+              aria-hidden="true"
+              draggable={false}
+              fetchpriority="high"
+              loading="eager"
+              decoding="async"
+              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+            />
             <div className="vb__overlay" aria-hidden="true" />
 
             {/* "Click for sound" prompt, top-right, while still in

@@ -273,6 +273,22 @@ main {
   transform-origin: center center;
 }
 
+/* Static Wistia thumbnail / swatch — sits behind the iframe so there is
+ * always an LCP-eligible image painted in the frame even before the
+ * Wistia bundle has finished booting. The iframe layers on top once it
+ * loads. */
+.vb__poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: var(--radius-video);
+}
+
 .vb__overlay {
   position: absolute;
   inset: 0;

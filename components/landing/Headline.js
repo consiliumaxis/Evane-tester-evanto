@@ -8,33 +8,26 @@ function HeroChart() {
   // Each candle: x position (px in viewBox), open / close / high / low (y).
   // Spread across the full 0–800 viewBox width so the chart reads as a
   // continuous market backdrop, not a corner accent.
+  // Fewer candles + grid lines than the first pass. Trims the SVG node
+  // count nearly in half (~50 → ~25) without losing the chart's
+  // editorial bullish-uptrend feel.
   const candles = [
-    { x: 20,  o: 240, c: 248, h: 235, l: 252 },
-    { x: 50,  o: 248, c: 234, h: 230, l: 252 },
-    { x: 80,  o: 234, c: 240, h: 230, l: 244 },
-    { x: 110, o: 240, c: 226, h: 222, l: 244 },
-    { x: 140, o: 226, c: 232, h: 222, l: 236 },
-    { x: 170, o: 232, c: 220, h: 216, l: 236 },
-    { x: 200, o: 220, c: 224, h: 216, l: 228 },
-    { x: 230, o: 224, c: 212, h: 208, l: 228 },
-    { x: 260, o: 212, c: 218, h: 208, l: 222 },
-    { x: 290, o: 218, c: 204, h: 200, l: 222 },
-    { x: 320, o: 204, c: 210, h: 200, l: 214 },
-    { x: 350, o: 210, c: 196, h: 192, l: 214 },
+    { x: 30,  o: 246, c: 232, h: 228, l: 250 },
+    { x: 80,  o: 232, c: 238, h: 228, l: 242 },
+    { x: 130, o: 238, c: 220, h: 216, l: 242 },
+    { x: 180, o: 220, c: 226, h: 216, l: 230 },
+    { x: 230, o: 226, c: 208, h: 204, l: 230 },
+    { x: 280, o: 208, c: 214, h: 204, l: 218 },
+    { x: 330, o: 214, c: 196, h: 192, l: 218 },
     { x: 380, o: 196, c: 200, h: 192, l: 204 },
-    { x: 410, o: 200, c: 188, h: 184, l: 204 },
-    { x: 440, o: 188, c: 192, h: 184, l: 196 },
-    { x: 470, o: 192, c: 178, h: 174, l: 196 },
-    { x: 500, o: 178, c: 184, h: 174, l: 188 },
-    { x: 530, o: 184, c: 168, h: 162, l: 188 },
-    { x: 560, o: 168, c: 174, h: 162, l: 178 },
-    { x: 590, o: 174, c: 156, h: 150, l: 178 },
-    { x: 620, o: 156, c: 162, h: 150, l: 166 },
-    { x: 650, o: 162, c: 146, h: 142, l: 166 },
-    { x: 680, o: 146, c: 152, h: 142, l: 156 },
-    { x: 710, o: 152, c: 134, h: 128, l: 156 },
-    { x: 740, o: 134, c: 140, h: 128, l: 144 },
-    { x: 770, o: 140, c: 122, h: 116, l: 146 },
+    { x: 430, o: 200, c: 184, h: 180, l: 204 },
+    { x: 480, o: 184, c: 188, h: 180, l: 192 },
+    { x: 530, o: 188, c: 168, h: 162, l: 192 },
+    { x: 580, o: 168, c: 172, h: 162, l: 176 },
+    { x: 630, o: 172, c: 152, h: 148, l: 176 },
+    { x: 680, o: 152, c: 158, h: 148, l: 162 },
+    { x: 730, o: 158, c: 134, h: 128, l: 162 },
+    { x: 780, o: 134, c: 118, h: 112, l: 138 },
   ];
 
   const trendPoints = candles
@@ -56,25 +49,25 @@ function HeroChart() {
         </linearGradient>
       </defs>
 
-      {/* horizontal grid */}
-      {Array.from({ length: 7 }).map((_, i) => (
+      {/* horizontal grid (5 lines instead of 7) */}
+      {Array.from({ length: 5 }).map((_, i) => (
         <line
           key={`h${i}`}
           x1="0"
           x2="800"
-          y1={20 + i * 40}
-          y2={20 + i * 40}
+          y1={40 + i * 55}
+          y2={40 + i * 55}
           stroke="rgba(245,242,234,0.06)"
           strokeWidth="1"
         />
       ))}
 
-      {/* vertical grid */}
-      {Array.from({ length: 13 }).map((_, i) => (
+      {/* vertical grid (8 lines instead of 13) */}
+      {Array.from({ length: 8 }).map((_, i) => (
         <line
           key={`v${i}`}
-          x1={20 + i * 60}
-          x2={20 + i * 60}
+          x1={50 + i * 100}
+          x2={50 + i * 100}
           y1="0"
           y2="300"
           stroke="rgba(245,242,234,0.04)"
