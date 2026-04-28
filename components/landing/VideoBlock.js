@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 // — every CSS class under .vb__) is unchanged from the previous iteration;
 // only the integration layer below was swapped from YouTube IFrame API to
 // Wistia Player API.
-const WISTIA_VIDEO_ID = 'u9iljczh01';
+const WISTIA_VIDEO_ID = 'ttoixchr7k';
 const WISTIA_E_V1_SRC = 'https://fast.wistia.com/assets/external/E-v1.js';
 
 // Suppress every piece of native Wistia chrome — our own overlay controls
@@ -146,48 +146,88 @@ export default function VideoBlock() {
 
   // Wire up Wistia. Same single-instance pattern as before — this video
   // handle is shared between main view and mini-player.
+  // Performance: defer the Wistia network load until either (a) the
+  // video block is approaching the viewport, or (b) the browser has been
+  // idle for ~1.5 s. This unblocks LCP / TBT on mobile by keeping the
+  // ~hundreds-of-KB Wistia bundle out of the initial parse.
   useEffect(() => {
     let cancelled = false;
-    loadWistiaPlayer(WISTIA_VIDEO_ID).then((video) => {
-      if (cancelled) return;
-      playerRef.current = video;
-      try {
-        video.mute();
-        if (inViewRef.current && typeof video.play === 'function') video.play();
-        const d = typeof video.duration === 'function' ? video.duration() : 0;
-        if (d) setDuration(d);
-      } catch (_) {}
+    let booted = false;
 
-      if (typeof video.bind === 'function') {
-        video.bind('play', () => {
-          if (cancelled) return;
-          setIsPaused(false);
-          setIsMiniDismissed(false);
-          try {
-            const d = video.duration();
-            if (d) setDuration((prev) => (Math.abs(prev - d) > 0.01 ? d : prev));
-          } catch (_) {}
-        });
-        video.bind('pause', () => {
-          if (cancelled) return;
-          setIsPaused(true);
-        });
-        video.bind('timechange', (t) => {
-          if (cancelled) return;
-          if (isScrubbingRef.current) return;
-          if (typeof t === 'number' && !Number.isNaN(t)) setCurrentTime(t);
-        });
-        video.bind('mutechange', (m) => {
-          if (cancelled) return;
-          setIsMuted(!!m);
-        });
-      }
+    const boot = () => {
+      if (booted || cancelled) return;
+      booted = true;
+      loadWistiaPlayer(WISTIA_VIDEO_ID).then((video) => {
+        if (cancelled) return;
+        playerRef.current = video;
+        try {
+          video.mute();
+          if (inViewRef.current && typeof video.play === 'function') video.play();
+          const d = typeof video.duration === 'function' ? video.duration() : 0;
+          if (d) setDuration(d);
+        } catch (_) {}
 
-      setIsReady(true);
-    });
+        if (typeof video.bind === 'function') {
+          video.bind('play', () => {
+            if (cancelled) return;
+            setIsPaused(false);
+            setIsMiniDismissed(false);
+            try {
+              const d = video.duration();
+              if (d) setDuration((prev) => (Math.abs(prev - d) > 0.01 ? d : prev));
+            } catch (_) {}
+          });
+          video.bind('pause', () => {
+            if (cancelled) return;
+            setIsPaused(true);
+          });
+          video.bind('timechange', (t) => {
+            if (cancelled) return;
+            if (isScrubbingRef.current) return;
+            if (typeof t === 'number' && !Number.isNaN(t)) setCurrentTime(t);
+          });
+          video.bind('mutechange', (m) => {
+            if (cancelled) return;
+            setIsMuted(!!m);
+          });
+        }
+
+        setIsReady(true);
+      });
+    };
+
+    // (a) Trigger when the video block is within ~500px of the viewport.
+    const el = blockRef.current;
+    let lazyIo = null;
+    if (el && typeof IntersectionObserver !== 'undefined') {
+      lazyIo = new IntersectionObserver((entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          boot();
+          if (lazyIo) lazyIo.disconnect();
+        }
+      }, { rootMargin: '500px' });
+      lazyIo.observe(el);
+    } else {
+      boot();
+    }
+
+    // (b) Idle-time fallback so the player still warms up on long pages
+    //     where the user never scrolls toward the video.
+    let idleId = null;
+    let idleTimer = null;
+    if (typeof window !== 'undefined' && window.requestIdleCallback) {
+      idleId = window.requestIdleCallback(boot, { timeout: 2500 });
+    } else {
+      idleTimer = setTimeout(boot, 1500);
+    }
 
     return () => {
       cancelled = true;
+      if (lazyIo) lazyIo.disconnect();
+      if (idleId && typeof window !== 'undefined' && window.cancelIdleCallback) {
+        try { window.cancelIdleCallback(idleId); } catch (_) {}
+      }
+      if (idleTimer) clearTimeout(idleTimer);
       const v = playerRef.current;
       if (v && typeof v.remove === 'function') {
         try { v.remove(); } catch (_) {}
