@@ -294,11 +294,11 @@ main {
 
 .vb__poster--hidden {
   opacity: 0;
-  visibility: hidden;
-  /* Keep transition on opacity but defer visibility flip until the fade
-   * completes so the still doesn't pop out before it has finished
-   * dissolving. */
-  transition: opacity 0.35s ease, visibility 0s linear 0.35s;
+  /* Composited-only transition: opacity is GPU-accelerated. We don't
+   * touch visibility here because animating it triggers non-composited
+   * work on mobile; the poster already has pointer-events: none in its
+   * base rule so a fully-faded image never receives clicks anyway. */
+  transition: opacity 0.35s ease;
 }
 
 .vb__overlay {
