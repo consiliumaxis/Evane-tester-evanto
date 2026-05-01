@@ -33,9 +33,11 @@ export default function CookieConsent() {
           We use cookies to keep the site working and to remember your
           preferences. By clicking Accept you agree to our use of cookies.
         </p>
-        <button type="button" className="cc-btn" onClick={accept}>
-          Accept
-        </button>
+        <div className="cc-action">
+          <button type="button" className="cc-btn" onClick={accept}>
+            Accept
+          </button>
+        </div>
         <div className="cc-links">
           <a href="/privacy-policy/#cookies">Cookie Policy</a>
           <span aria-hidden="true">·</span>

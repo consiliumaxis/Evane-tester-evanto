@@ -1145,6 +1145,12 @@ main {
   color: var(--text-soft);
 }
 
+.cc-action {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
 .cc-btn {
   appearance: none;
   display: inline-block;
@@ -1160,7 +1166,6 @@ main {
   text-transform: uppercase;
   cursor: pointer;
   transition: transform 0.15s ease, filter 0.15s ease;
-  margin-bottom: 12px;
 }
 
 .cc-btn:hover,
@@ -1173,6 +1178,7 @@ main {
 .cc-links {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 12px;
   font-size: 0.78rem;
   color: var(--text-faint);
@@ -1191,6 +1197,7 @@ main {
   .cc-root  { left: 12px; right: 12px; bottom: 12px; }
   .cc-card  { padding: 14px 16px; }
   .cc-text  { font-size: 0.82rem; line-height: 1.5; margin-bottom: 12px; }
-  .cc-btn   { padding: 10px 22px; font-size: 0.78rem; margin-bottom: 10px; }
+  .cc-btn    { padding: 10px 22px; font-size: 0.78rem; }
+  .cc-action { margin-bottom: 10px; }
   .cc-links { font-size: 0.72rem; gap: 10px; }
 }
