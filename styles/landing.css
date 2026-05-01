@@ -321,15 +321,16 @@ main {
  * balanced. */
 .vb__center-play {
   position: absolute;
+  /* Defensive inset reset must come BEFORE top/left, otherwise the
+   * `inset` shorthand expands to top/right/bottom/left: auto and
+   * silently overrides the centring values, dropping the button into
+   * the frame's top-left corner where translate(-50%, -50%) then
+   * clips most of it outside the frame. */
+  inset: auto;
   top: 50%;
   left: 50%;
-  /* Hard-reset every box-model property that could nudge the wrapper
-   * off centre. With box-sizing: border-box the 1.5 px gold border
-   * stays INSIDE the 86 px square instead of growing the box, so the
-   * geometric centre stays exactly at (top: 50%, left: 50%) and the
-   * translate(-50%, -50%) below lands the wrapper's centre on the
-   * frame's centre to the pixel. */
-  inset: auto;
+  right: auto;
+  bottom: auto;
   margin: 0;
   padding: 0;
   box-sizing: border-box;
