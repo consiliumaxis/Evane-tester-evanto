@@ -672,6 +672,29 @@ export default function VideoBlock() {
             <div ref={mountRef} className={wistiaMountClass} />
             <div className="vb__overlay" aria-hidden="true" />
 
+            {/* Big centered Play before activation, on the main view
+                only. Clicking it kicks the same handlePlay activation
+                path (seek 0 + unmute + volume 1 + play) so the video
+                also gains sound on the very first interaction. */}
+            {!hasActivated && !isMini && (
+              <button
+                type="button"
+                className="vb__center-play"
+                onClick={handlePlayPause}
+                onPointerDown={(e) => e.stopPropagation()}
+                aria-label="Play video"
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  {/* Material-style play triangle. Path is intentionally
+                      shifted slightly LEFT of geometric center so the
+                      visual mass of the right-pointing tip lands at the
+                      true centre of the round button. No translateX
+                      needed on top of that. */}
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </button>
+            )}
+
             {/* Mini-only chrome: drag grip, close button, paused overlay. */}
             {isMini && (
               <React.Fragment>

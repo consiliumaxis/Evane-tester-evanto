@@ -311,6 +311,62 @@ main {
     linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.22) 100%);
 }
 
+/* Big centered Play overlay shown on the main view before the user
+ * activates the player. Geometry: the WRAPPER is centred via
+ * left/top: 50% + translate(-50%, -50%); the SVG inside uses the
+ * Material-style triangle path "M8 5v14l11-7z" which is itself
+ * shifted slightly left of the 24×24 viewBox centre so the
+ * right-pointing tip's optical mass lands on the round button's
+ * centre. No extra transform is applied to the SVG — it's already
+ * balanced. */
+.vb__center-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 86px;
+  height: 86px;
+  margin: 0;
+  padding: 0;
+  border-radius: 999px;
+  background: rgba(10, 13, 20, 0.55);
+  border: 1.5px solid rgba(224, 189, 104, 0.6);
+  color: var(--gold-bright);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 22px 60px -20px rgba(224, 189, 104, 0.45),
+    0 0 50px -10px rgba(224, 189, 104, 0.3);
+  transform: translate(-50%, -50%);
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  z-index: 3;
+}
+
+.vb__center-play:hover,
+.vb__center-play:focus-visible {
+  background: rgba(201, 164, 76, 0.22);
+  border-color: var(--gold-bright);
+  /* Re-state the centring transform so :hover doesn't drift the button. */
+  transform: translate(-50%, -50%) scale(1.04);
+  outline: none;
+}
+
+.vb__center-play svg {
+  width: 30px;
+  height: 30px;
+  display: block;
+  /* No translate — the path itself is optically balanced. */
+}
+
+@media (max-width: 720px) {
+  .vb__center-play     { width: 70px; height: 70px; }
+  .vb__center-play svg { width: 24px; height: 24px; }
+}
+
 /* ---- Custom video controls -----------------------------------------------
  * All standard YouTube UI is hidden (controls: 0). We layer a custom
  * control set on top of the iframe:
@@ -1049,3 +1105,92 @@ main {
   .error-hero         { padding: 72px 0; }
 }
 
+
+/* =========================================================================
+ * Cookie consent banner — site-styled dark glass card pinned to the
+ * bottom of the viewport. Renders only on first visit (localStorage
+ * gated by components/CookieConsent.js).
+ * ========================================================================= */
+
+.cc-root {
+  position: fixed;
+  z-index: 200;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.cc-card {
+  pointer-events: auto;
+  width: 100%;
+  max-width: 460px;
+  padding: 18px 20px;
+  background: rgba(10, 13, 20, 0.92);
+  border: 1px solid rgba(201, 164, 76, 0.32);
+  border-radius: 14px;
+  font-family: var(--font);
+  color: var(--text-soft);
+  box-shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.cc-text {
+  font-size: 0.88rem;
+  line-height: 1.55;
+  margin: 0 0 14px;
+  color: var(--text-soft);
+}
+
+.cc-btn {
+  appearance: none;
+  display: inline-block;
+  border: 0;
+  padding: 11px 26px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--gold-bright) 0%, var(--gold) 55%, var(--gold-deep) 100%);
+  color: #0a0d14;
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform 0.15s ease, filter 0.15s ease;
+  margin-bottom: 12px;
+}
+
+.cc-btn:hover,
+.cc-btn:focus-visible {
+  transform: translateY(-1px);
+  filter: brightness(1.07);
+  outline: none;
+}
+
+.cc-links {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.78rem;
+  color: var(--text-faint);
+}
+
+.cc-links a {
+  color: var(--text-muted);
+  transition: color 0.15s ease;
+}
+
+.cc-links a:hover {
+  color: var(--gold-bright);
+}
+
+@media (max-width: 720px) {
+  .cc-root  { left: 12px; right: 12px; bottom: 12px; }
+  .cc-card  { padding: 14px 16px; }
+  .cc-text  { font-size: 0.82rem; line-height: 1.5; margin-bottom: 12px; }
+  .cc-btn   { padding: 10px 22px; font-size: 0.78rem; margin-bottom: 10px; }
+  .cc-links { font-size: 0.72rem; gap: 10px; }
+}
