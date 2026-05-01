@@ -667,12 +667,14 @@ export default function VideoBlock() {
                 aria-label="Play video"
               >
                 <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  {/* Material-style play triangle. Path is intentionally
-                      shifted slightly LEFT of geometric center so the
-                      visual mass of the right-pointing tip lands at the
-                      true centre of the round button. No translateX
-                      needed on top of that. */}
-                  <path d="M8 5v14l11-7z" />
+                  {/* Mathematically centred play triangle.
+                      Vertices: (7, 6) — (7, 18) — (17, 12).
+                      Bounding box: x 7..17, y 6..18.
+                      Bounding-box centre: (12, 12) — exactly the centre
+                      of the 24×24 viewBox, so the path is on the same
+                      pixel as the button's geometric centre. No optical
+                      offset / no transform needed on top. */}
+                  <path d="M7 6v12l10-6z" />
                 </svg>
               </button>
             )}

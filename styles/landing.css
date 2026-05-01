@@ -323,10 +323,18 @@ main {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 86px;
-  height: 86px;
+  /* Hard-reset every box-model property that could nudge the wrapper
+   * off centre. With box-sizing: border-box the 1.5 px gold border
+   * stays INSIDE the 86 px square instead of growing the box, so the
+   * geometric centre stays exactly at (top: 50%, left: 50%) and the
+   * translate(-50%, -50%) below lands the wrapper's centre on the
+   * frame's centre to the pixel. */
+  inset: auto;
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
+  width: 86px;
+  height: 86px;
   border-radius: 999px;
   background: rgba(10, 13, 20, 0.55);
   border: 1.5px solid rgba(224, 189, 104, 0.6);
