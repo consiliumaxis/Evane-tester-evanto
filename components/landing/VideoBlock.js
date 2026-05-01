@@ -243,24 +243,20 @@ export default function VideoBlock() {
       });
     };
 
-    // Boot strategy — split by viewport so mobile keeps Wistia strictly
-    // OUT of Lighthouse's scoring window even on slow cellular profiles,
-    // while desktop still autoplays without any user gesture.
+    // Boot strategy — load + requestIdleCallback on every viewport, just
+    // with different timeouts. The static <img.vb__poster> + the centered
+    // Play overlay are SSR'd, so the user sees the "video here" frame
+    // instantly. Wistia hydrates a beat later and muted autoplay starts;
+    // the poster fades on Wistia's first 'play' event.
     //
-    // Mobile (max-width: 767px) — gesture-or-late-idle facade.
-    //   First trigger wins:
-    //     a) any of pointerdown / scroll / keydown on window;
-    //     b) window 'load' + requestIdleCallback({ timeout: 5000 ms })
-    //        — fires only if the user has done nothing for ~5 s after
-    //        load. Safety net for visitors who literally don't move.
-    //   PSI's mobile run never moves a finger and never reaches the 5 s
-    //   safety net inside its scoring window, so file.mp4 / file.jpg /
-    //   E-v1.js / captions / chapters / manual_quality are all skipped
-    //   entirely on the mobile score.
+    //   Mobile  — load + rIC({ timeout: 1000 ms })  ≈ ~1 s after load.
+    //   Desktop — load + rIC({ timeout: 2200 ms })  ≈ up to ~2 s after load.
     //
-    // Desktop — same delayed-autoplay path as before:
-    //   load + requestIdleCallback({ timeout: 2200 ms }) → boot.
-    //   Real visitors get autoplay without a gesture.
+    // This holds the heavy Wistia bootstrap work outside FCP / LCP and
+    // mostly outside TBT on mobile (PSI Lighthouse run on slow-4G has
+    // FCP ≈ 1.5–2.5 s, so Wistia work fires at ≈ load + 1 s and finishes
+    // before TTI — much smaller TBT contribution than an eager mount,
+    // while still feeling immediate to real users.
     const isMobile =
       typeof window !== 'undefined' &&
       typeof window.matchMedia === 'function' &&
@@ -269,33 +265,16 @@ export default function VideoBlock() {
     let idleTimer = null;
     let idleId = null;
     let loadHandler = null;
-    let removeGesture = null;
 
     const scheduleBoot = () => {
       if (cancelled || booted) return;
-      const timeout = isMobile ? 5000 : 2200;
+      const timeout = isMobile ? 1000 : 2200;
       if (typeof window !== 'undefined' && window.requestIdleCallback) {
         idleId = window.requestIdleCallback(() => boot(), { timeout });
       } else {
-        idleTimer = setTimeout(boot, timeout - 400);
+        idleTimer = setTimeout(boot, Math.max(0, timeout - 200));
       }
     };
-
-    if (isMobile && typeof window !== 'undefined') {
-      const gestures = ['pointerdown', 'scroll', 'keydown'];
-      const onGesture = () => { boot(); cleanupGesture(); };
-      const cleanupGesture = () => {
-        gestures.forEach((ev) => window.removeEventListener(ev, onGesture));
-      };
-      removeGesture = cleanupGesture;
-      gestures.forEach((ev) => {
-        try {
-          window.addEventListener(ev, onGesture, { passive: true });
-        } catch (_) {
-          window.addEventListener(ev, onGesture);
-        }
-      });
-    }
 
     if (typeof document !== 'undefined') {
       if (document.readyState === 'complete') {
@@ -311,7 +290,6 @@ export default function VideoBlock() {
       if (loadHandler && typeof window !== 'undefined') {
         window.removeEventListener('load', loadHandler);
       }
-      if (removeGesture) removeGesture();
       if (idleTimer) clearTimeout(idleTimer);
       if (idleId && typeof window !== 'undefined' && window.cancelIdleCallback) {
         try { window.cancelIdleCallback(idleId); } catch (_) {}
@@ -672,11 +650,15 @@ export default function VideoBlock() {
             <div ref={mountRef} className={wistiaMountClass} />
             <div className="vb__overlay" aria-hidden="true" />
 
-            {/* Big centered Play before activation, on the main view
-                only. Clicking it kicks the same handlePlay activation
-                path (seek 0 + unmute + volume 1 + play) so the video
-                also gains sound on the very first interaction. */}
-            {!hasActivated && !isMini && (
+            {/* Big centered Play sits on top of the static poster as the
+                "video here" cue while Wistia is still hydrating. The
+                instant Wistia fires its first 'play' / 'timechange'
+                event we flip posterHidden, which fades both the poster
+                and this button in a single composited transition.
+                Clicking it kicks the same handlePlay activation path
+                (seek 0 + unmute + volume 1 + play) so the video also
+                gains sound on the very first interaction. */}
+            {!hasActivated && !posterHidden && !isMini && (
               <button
                 type="button"
                 className="vb__center-play"
