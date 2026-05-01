@@ -40,7 +40,6 @@ export default function CookieConsent() {
         </div>
         <div className="cc-links">
           <a href="/privacy-policy/#cookies">Cookie Policy</a>
-          <span aria-hidden="true">·</span>
           <a href="/privacy-policy/">Privacy Policy</a>
         </div>
       </div>
