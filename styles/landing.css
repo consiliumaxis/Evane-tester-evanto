@@ -368,12 +368,18 @@ main {
   width: 30px;
   height: 30px;
   display: block;
-  /* No translate — the path itself is optically balanced. */
+  /* Optical alignment only. The wrapper is mathematically centred
+   * (top/left: 50% + translate(-50%, -50%)); the SVG triangle inside
+   * is nudged ~2 px to the right because a right-pointing triangle
+   * with equal-area centring still reads as left-of-centre due to its
+   * pointed apex on the right. Wrapper position is unchanged. */
+  transform: translateX(2px);
 }
 
 @media (max-width: 720px) {
   .vb__center-play     { width: 70px; height: 70px; }
-  .vb__center-play svg { width: 24px; height: 24px; }
+  /* Smaller SVG on phones → smaller optical nudge to keep proportion. */
+  .vb__center-play svg { width: 24px; height: 24px; transform: translateX(1.5px); }
 }
 
 /* ---- Custom video controls -----------------------------------------------
