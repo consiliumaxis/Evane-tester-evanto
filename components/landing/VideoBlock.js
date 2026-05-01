@@ -650,15 +650,15 @@ export default function VideoBlock() {
             <div ref={mountRef} className={wistiaMountClass} />
             <div className="vb__overlay" aria-hidden="true" />
 
-            {/* Big centered Play sits on top of the static poster as the
-                "video here" cue while Wistia is still hydrating. The
-                instant Wistia fires its first 'play' / 'timechange'
-                event we flip posterHidden, which fades both the poster
-                and this button in a single composited transition.
-                Clicking it kicks the same handlePlay activation path
-                (seek 0 + unmute + volume 1 + play) so the video also
-                gains sound on the very first interaction. */}
-            {!hasActivated && !posterHidden && !isMini && (
+            {/* Big centered Play stays visible on top of the player for
+                the entire pre-activation phase (muted autoplay is fine
+                — the iframe sits at z-index 1, the button at z-index 3,
+                so the live frames just keep playing silently underneath
+                it). The button only unmounts once the user has actually
+                clicked Play and triggered handlePlay (seek 0 + unmute +
+                volume 1 + play) — i.e. the moment hasActivated flips
+                true. */}
+            {!hasActivated && !isMini && (
               <button
                 type="button"
                 className="vb__center-play"
